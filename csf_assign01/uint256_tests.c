@@ -215,6 +215,9 @@ void test_add( TestObjs *objs ) {
 
   result = uint256_add( objs->max, objs->one );
   ASSERT_SAME( objs->zero, result );
+
+  result = uint256_add( objs->one, objs->max );
+  ASSERT_SAME( objs->zero, result );
 }
 
 void test_sub( TestObjs *objs ) {

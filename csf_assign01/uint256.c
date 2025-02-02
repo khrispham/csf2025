@@ -151,7 +151,7 @@ UInt256 uint256_add( UInt256 left, UInt256 right ) {
     //add the bitwise values and the carry from the previous uint32
     sum.data[i] = left.data[i] + right.data[i] + carry;
 
-    if (sum.data[i] < leftval) {  
+    if (sum.data[i] < leftval || sum.data[i] < rightval) {  
     // the addition overflowed
       carry = 1;
     }
@@ -176,30 +176,14 @@ UInt256 uint256_sub( UInt256 left, UInt256 right ) {
 // Return the two's-complement negation of the given UInt256 value.
 UInt256 uint256_negate( UInt256 val ) {
   UInt256 result;
-  bool is_zero = true;
-    
-  for(int i = 0; i < 8; i++) {
-       result.data[i] = ~val.data[i];
-      if(val.data[i] != 0) {
-          is_zero = false;
-      }
-  }
+  UInt256 one = uint256_create_from_u32(1);
 
-  if(is_zero) {
-    for(int i = 0; i < 8; i++) {
-      result.data[i] = 0;
-    }
-    return result;
+  //make result negation of val
+  for (int i = 0; i < 8; i++) {
+    result.data[i] = ~val.data[i];
   }
-
-  for(int i = 0; i < 8; i++) {
-    if(result.data[i] == 0xf) {
-      result.data[i] = 0;
-    } else {
-      result.data[i]++;
-      break;
-    }
-  } 
+  //add 1 to result
+  result = uint256_add(result, one);
 
   return result;
 }
