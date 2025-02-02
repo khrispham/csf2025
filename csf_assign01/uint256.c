@@ -200,13 +200,14 @@ void uint256_print(UInt256 val) {
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
   UInt256 product = uint256_create_from_u32(0);
+  //store bit-wise product
   UInt256 term = uint256_create_from_u32(0);
   for (int index = 0; index < 8; index++){
     for (int bitindex = 0; bitindex < 32; bitindex++){
-      if(right.data[index] & (1 << bitindex) == (1 << bitindex)){
+      if((right.data[index] & (1u << bitindex)) == (1u << bitindex)){
+        //1 at index n, multiply left by 2^n
         term = uint256_lshift(left, index*32 + bitindex);
         product = uint256_add(product, term);
-        term = uint256_create_from_u32(0);
       }
     }
   }
