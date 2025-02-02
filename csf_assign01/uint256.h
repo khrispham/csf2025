@@ -48,6 +48,8 @@ UInt256 uint256_sub( UInt256 left, UInt256 right );
 // Return the two's-complement negation of the given UInt256 value.
 UInt256 uint256_negate( UInt256 val );
 
+void uint256_print( UInt256 val );
+
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right );
 
