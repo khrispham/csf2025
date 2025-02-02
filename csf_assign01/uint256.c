@@ -199,14 +199,45 @@ void uint256_print(UInt256 val) {
 
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
-  UInt256 product;
-  // TODO: implement
+  UInt256 product = uint256_create_from_u32(0);
+  UInt256 term = uint256_create_from_u32(0);
+  for (int index = 0; index < 8; index++){
+    for (int bitindex = 0; bitindex < 32; bitindex++){
+      if(right.data[index] & (1 << bitindex) == (1 << bitindex)){
+        term = uint256_lshift(left, index*32 + bitindex);
+        product = uint256_add(product, term);
+        term = uint256_create_from_u32(0);
+      }
+    }
+  }
   return product;
 }
 
 UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
   assert( shift < 256 );
-  UInt256 result;
-  // TODO: implement
+  unsigned indexshift = shift / 32;
+  unsigned bitshift = shift % 32;
+  uint32_t left;
+  uint32_t right;
+  UInt256 temp = uint256_create_from_u32(0);
+  UInt256 result = uint256_create_from_u32(0);
+  for (int i = 7; i >= 0; i--) {
+    //separate left and right side of current element
+    right = val.data[i] << bitshift;
+    if (bitshift > 0) {
+      left = val.data[i] >> (32 - bitshift);
+    }else{
+      //shift 32 leading to undefined behavior
+      left = 0;
+    }
+    if (i + indexshift < 8) {
+      temp.data[i + indexshift] = right;
+    }
+    if (i + indexshift + 1 < 8) {
+      temp.data[i + indexshift + 1] = left;
+    }
+    result = uint256_add(result, temp);
+    temp = uint256_create_from_u32(0);
+  }
   return result;
 }
