@@ -82,6 +82,10 @@ char *uint256_format_as_hex( UInt256 val ) {
   }
   //if the value is 0 or only 4 bits (i think this is an edge case)
   if (endPoint == 0) {
+  if (val.data[0] == 0) {
+      strcpy(hex, "0"); // Copy "0" into the allocated memory
+      return hex;
+  }
     char segment[9];
     uint32_t newval = val.data[0];
     sprintf(segment, "%x", newval);
@@ -89,20 +93,25 @@ char *uint256_format_as_hex( UInt256 val ) {
     return hex;
   }
 
-  //iterate to everything but endpoint
-  for (int i = 0; i < endPoint; i++) {
-      uint32_t newval = val.data[i];
-      char segment[9]; 
-      sprintf(segment, "%08x", newval); // format with leading 0s
-      strcat(hex, segment);
-  }
-  //handle endpoint without the leading 0's
+
+    //handle endpoint without the leading 0's
   char segment[9];
   uint32_t newval = val.data[endPoint];
   sprintf(segment, "%x", newval); // format with leading 0s
   strcat(hex, segment);
-  return hex;
+
+
+  //iterate to everything but endpoint
+  for (int i = endPoint-1; i >= 0; i--) {
+      uint32_t newval = val.data[i];
+      char segment[9];
+      sprintf(segment, "%08x", newval); // format with leading 0s
+      strcat(hex, segment);
+  }
+    return hex;
+
 }
+
 
 // Get 32 bits of data from a UInt256 value.
 // Index 0 is the least significant 32 bits, index 7 is the most
