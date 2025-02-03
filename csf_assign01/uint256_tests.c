@@ -217,6 +217,18 @@ void test_add_edgecases() {
   ASSERT( 0 == strcmp( "0", s ) );
   free( s);
 
+  //edgecase adding two 0s
+  result = uint256_add(zero, zero);
+  s = uint256_format_as_hex(result);
+  ASSERT(0 == strcmp("0", s));
+  free(s);
+
+  //edge case causing carrys
+  UInt256 carry = uint256_create_from_hex("ffffffff00000000ffffffff00000000ffffffff00000000ffffffff00000000");
+  result = uint256_add(carry, one);
+  s = uint256_format_as_hex(result);
+  ASSERT(0 == strcmp("ffffffff00000000ffffffff00000000ffffffff00000000ffffffff00000001", s));
+  free(s);
 
   //edge case adding 0
   result = uint256_add(zero, max);
