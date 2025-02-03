@@ -243,13 +243,25 @@ void test_add( TestObjs *objs ) {
 
   result = uint256_add( objs->one, objs->max );
   ASSERT_SAME( objs->zero, result );
+
+  result = uint256_add( two, objs->max );
+  ASSERT_SAME( objs->one, result );
+
+  result = uint256_add( objs->max, two );
+  ASSERT_SAME( objs->one, result );
 }
 
 void test_sub( TestObjs *objs ) {
   UInt256 result;
+  uint32_t two_data[8] = { 2U };
+  UInt256 two;
+  INIT_FROM_ARR( two, two_data );
 
   result = uint256_sub( objs->zero, objs->zero );
   ASSERT_SAME( objs->zero, result );
+
+  result = uint256_sub( objs->max, objs->zero );
+  ASSERT_SAME( objs->max, result );
 
   result = uint256_sub( objs->one, objs->one );
   ASSERT_SAME( objs->zero, result );
@@ -262,6 +274,12 @@ void test_sub( TestObjs *objs ) {
 
   result = uint256_sub( objs->zero, objs->max );
   ASSERT_SAME( objs->one, result );
+
+  result = uint256_sub( objs->one, objs->max );
+  ASSERT_SAME( two, result );
+
+  result = uint256_sub( objs->one, two );
+  ASSERT_SAME( objs->max, result );
 }
 
 void test_negate( TestObjs *objs ) {
@@ -297,6 +315,9 @@ void test_mul( TestObjs *objs ) {
   ASSERT_SAME( objs->one, result );
 
   result = uint256_mul( objs->one, objs->zero );
+  ASSERT_SAME( objs->zero, result );
+
+  result = uint256_mul( objs->zero, objs->max );
   ASSERT_SAME( objs->zero, result );
 
   result = uint256_mul( objs->zero, objs->one );
@@ -339,7 +360,8 @@ void test_mul( TestObjs *objs ) {
 void test_lshift( TestObjs *objs ) {
   UInt256 result;
 
-  UInt256 two = { { 2,0,0,0,0,0,0,0 } }, four = { { 4,0,0,0,0,0,0,0 } };
+  UInt256 two = { { 2,0,0,0,0,0,0,0 } }, four = { { 4,0,0,0,0,0,0,0 } }, sixteen = { {16,0,0,0,0,0,0,0} };
+  
 
   // some very basic tests
 
@@ -351,6 +373,9 @@ void test_lshift( TestObjs *objs ) {
 
   result = uint256_lshift( objs->one, 2 );
   ASSERT_SAME( four, result );
+
+  result = uint256_lshift( objs->one, 4 );
+  ASSERT_SAME( sixteen, result );
 
   // a more complicated test
   {
