@@ -207,6 +207,9 @@ void test_add( TestObjs *objs ) {
   result = uint256_add( objs->zero, objs->one );
   ASSERT_SAME( objs->one, result );
 
+  result = uint256_add( objs->one, objs->zero );
+  ASSERT_SAME( objs->one, result );
+
   uint32_t two_data[8] = { 2U };
   UInt256 two;
   INIT_FROM_ARR( two, two_data );
@@ -229,8 +232,14 @@ void test_sub( TestObjs *objs ) {
   result = uint256_sub( objs->one, objs->one );
   ASSERT_SAME( objs->zero, result );
 
+  result = uint256_sub( objs->max, objs->max );
+  ASSERT_SAME( objs->zero, result );
+
   result = uint256_sub( objs->zero, objs->one );
   ASSERT_SAME( objs->max, result );
+
+  result = uint256_sub( objs->zero, objs->max );
+  ASSERT_SAME( objs->one, result );
 }
 
 void test_negate( TestObjs *objs ) {
