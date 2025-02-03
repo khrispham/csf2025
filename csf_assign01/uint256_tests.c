@@ -50,6 +50,7 @@ void test_neg_overflow( TestObjs *objs );
 void test_mul( TestObjs *objs );
 void test_lshift( TestObjs *objs );
 void test_format_hex_edgecases();
+void test_add_edgecases();
 
 int main( int argc, char **argv ) {
   if ( argc > 1 )
@@ -70,7 +71,8 @@ int main( int argc, char **argv ) {
   TEST( test_mul );
   TEST( test_lshift );
   TEST(test_format_hex_edgecases);
-
+  TEST(test_add_edgecases);
+  
   TEST_FINI();
 }
 
@@ -201,6 +203,59 @@ void test_format_as_hex( TestObjs *objs ) {
 }
 
 
+void test_add_edgecases() {
+  char *s;
+  //edge case adding to overflow
+  UInt256 zero = uint256_create_from_hex( "0" );
+  UInt256 one = uint256_create_from_hex( "1" );
+  UInt256 max = uint256_create_from_hex( "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" );
+  UInt256 result;
+  UInt256 value1;
+  UInt256 value2;
+  result = uint256_add(one, max);
+  s = uint256_format_as_hex( result );
+  ASSERT( 0 == strcmp( "0", s ) );
+  free( s);
+
+
+  //edge case adding 0
+  result = uint256_add(zero, max);
+  s = uint256_format_as_hex( result );
+  ASSERT( 0 == strcmp( "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", s ) );
+  free( s);
+
+  //edge case adding two maxes
+  result = uint256_add(max, max);
+  s = uint256_format_as_hex(result);
+  ASSERT(0 == strcmp("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe", s));
+  free(s);
+
+  //cases using genfact.rb
+  value1 = uint256_create_from_hex( "3f8686bd2e40f6a604ea22542d1ef1a0c1133c126daefc777213ed212541be2" );
+  value2 = uint256_create_from_hex( "572a40a707971f64b79ce5c99adba9baaf98a27308a07cc8f5f1d1d5f1d3380" );
+  result = uint256_add(value1, value2);
+  s = uint256_format_as_hex( result );
+  ASSERT( 0 == strcmp( "96b0c76435d8160abc87081dc7fa9b5b70abde85764f79406805bef71714f62", s ) );
+  free( s);
+
+  value1 = uint256_create_from_hex( "8e91ef1c3b04397515d0e6a92512b58d94163b9d5ac5b027d2ab7b0fcf3c42e" );
+  value2 = uint256_create_from_hex( "fcb121d798221417eb4b59a27681fd05cf389a641230efc73731f99a2ade38f" );
+  result = uint256_add(value1, value2);
+  s = uint256_format_as_hex( result );
+  ASSERT( 0 == strcmp( "18b4310f3d3264d8d011c404b9b94b293634ed6016cf69fef09dd74a9fa1a7bd", s ) );
+  free( s);
+
+  value1 = uint256_create_from_hex( "b16339873082dddf37f98a7fd34797d0e4857400d25ff9bae515abf3c3a4d50" );
+  value2 = uint256_create_from_hex( "7f287a693f0c41314115124ede4f0ffebca4640ff3cfebe115722523adf4dc6" );
+  result = uint256_add(value1, value2);
+  s = uint256_format_as_hex( result );
+  ASSERT( 0 == strcmp( "1308bb3f06f8f1f10790e9cceb196a7cfa129d810c62fe59bfa87d1177199b16", s ) );
+  free( s);
+
+  
+}
+
+
 
 void test_format_hex_edgecases() {
   char *s;
@@ -215,6 +270,13 @@ void test_format_hex_edgecases() {
   UInt256 value2 = uint256_create_from_hex( "0" );
   s = uint256_format_as_hex( value2 );
   ASSERT( 0 == strcmp( "0", s ) );
+  free( s);
+
+    //only one significant 32 bit
+  UInt256 value3 = uint256_create_from_hex( "f000000000000000000000000000000000000000000000000000000000000000" );
+  
+  s = uint256_format_as_hex( value3 );
+  ASSERT( 0 == strcmp( "f000000000000000000000000000000000000000000000000000000000000000", s ) );
   free( s);
 }
 

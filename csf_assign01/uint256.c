@@ -32,14 +32,14 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 UInt256 uint256_create_from_hex( const char *hex ) {
   UInt256 result = {0};
   size_t length = strlen(hex);
-  char *start;
+  // char *start;
   //if length is over 64, only use the rightmost 64
   if (length > 64) {
     hex += length - 64;
     length = 64;
   } 
   //start at the last value
-  char *position = hex + length - 1; 
+  const char *position = hex + length - 1; 
   int i = 0; 
   while (length > 0) {
     //get 8 bits so that it will never overflow
@@ -155,12 +155,12 @@ UInt256 uint256_add( UInt256 left, UInt256 right ) {
   UInt256 sum;
   for (int i = 0; i < 8; i++) {
     uint32_t leftval = left.data[i];
-    uint32_t rightval = right.data[i];
+    // uint32_t rightval = right.data[i];
 
     //add the bitwise values and the carry from the previous uint32
     sum.data[i] = left.data[i] + right.data[i] + carry;
 
-    if (sum.data[i] < leftval || sum.data[i] < rightval) {  
+    if (sum.data[i] < leftval || (sum.data[i] == leftval && carry == 1)) {  
     // the addition overflowed
       carry = 1;
     }
