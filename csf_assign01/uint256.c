@@ -159,7 +159,7 @@ UInt256 uint256_add( UInt256 left, UInt256 right ) {
 
     //add the bitwise values and the carry from the previous uint32
     sum.data[i] = left.data[i] + right.data[i] + carry;
-
+     //check if the sum exceeds the max value in that a uint32_t can store
     if (sum.data[i] < leftval || (sum.data[i] == leftval && carry == 1)) {  
     // the addition overflowed
       carry = 1;
