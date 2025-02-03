@@ -49,6 +49,7 @@ void test_negate( TestObjs *objs );
 void test_neg_overflow( TestObjs *objs );
 void test_mul( TestObjs *objs );
 void test_lshift( TestObjs *objs );
+void test_format_hex_edgecases();
 
 int main( int argc, char **argv ) {
   if ( argc > 1 )
@@ -68,6 +69,7 @@ int main( int argc, char **argv ) {
   TEST( test_neg_overflow );
   TEST( test_mul );
   TEST( test_lshift );
+  TEST(test_format_hex_edgecases);
 
   TEST_FINI();
 }
@@ -197,6 +199,26 @@ void test_format_as_hex( TestObjs *objs ) {
   ASSERT( 0 == strcmp( "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", s ) );
   free( s );
 }
+
+
+
+void test_format_hex_edgecases() {
+  char *s;
+      //test to make sure it works with lots of 0's in between values
+  UInt256 value1 = uint256_create_from_hex( "f000000000000000000000000f" );
+  s = uint256_format_as_hex( value1 );
+  ASSERT( 0 == strcmp( "f000000000000000000000000f", s ) );
+  free( s);
+
+
+  //0 edge case
+  UInt256 value2 = uint256_create_from_hex( "0" );
+  s = uint256_format_as_hex( value2 );
+  ASSERT( 0 == strcmp( "0", s ) );
+  free( s);
+}
+
+
 
 void test_add( TestObjs *objs ) {
   UInt256 result;
