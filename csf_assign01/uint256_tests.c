@@ -53,6 +53,7 @@ void test_format_hex_edgecases();
 void test_add_edgecases();
 void test_subtract_edgecases();
 void test_multiply_edgecases();
+void test_lshift_edgecases();
 
 int main( int argc, char **argv ) {
   if ( argc > 1 )
@@ -76,6 +77,7 @@ int main( int argc, char **argv ) {
   TEST(test_add_edgecases);
   TEST(test_subtract_edgecases);
   TEST(test_multiply_edgecases);
+  TEST(test_lshift_edgecases);
   
   TEST_FINI();
 }
@@ -587,3 +589,44 @@ void test_lshift( TestObjs *objs ) {
     ASSERT_SAME( expected, result );
   }
 }
+
+void test_lshift_edgecases() {
+  UInt256 zero = uint256_create_from_hex( "0" );
+  UInt256 one = uint256_create_from_hex( "1" );
+  UInt256 result;
+
+  // Shift 1 left by 255 bits
+  UInt256 expected255 = {{0, 0, 0, 0, 0, 0, 0, 0x80000000}};
+  result = uint256_lshift(one, 255);
+  ASSERT_SAME(expected255, result);
+
+  // Shift 2nd highest index by 32
+  UInt256 high32 = {{0, 0, 0, 0, 0, 0, 0x80000000, 0}};
+  UInt256 expectedhigh32 = {{0, 0, 0, 0, 0, 0, 0, 0x80000000}};
+  result = uint256_lshift(high32, 32);
+  ASSERT_SAME(expectedhigh32, result);
+
+  // Shift highest index by 32
+  UInt256 highest32 = {{0, 0, 0, 0, 0, 0, 0, 0x80000000}};
+  result = uint256_lshift(highest32, 32);
+  ASSERT_SAME(zero, result);
+
+  // Shift lowest bit by 32
+  UInt256 low32 = {{0xFFFFFFFF, 0, 0, 0, 0, 0, 0, 0}};
+  UInt256 expectedlow32 = {{0, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0}};
+  result = uint256_lshift(low32, 32);
+  ASSERT_SAME(expectedlow32, result);
+
+  // Shift zero
+  result = uint256_lshift(zero, 50);
+  ASSERT_SAME(zero, result);
+
+  // Shift random number by 64 bits
+  UInt256 randnum = {{0x12345678, 0x9ABCDEF0, 0xDEADBEEF, 0xCAFEBABE,
+                       0x0BADF00D, 0xBAADF00D, 0xFEEDFACE, 0xF00DFACE}};
+  UInt256 expected64 = {{0, 0, 0x12345678, 0x9ABCDEF0, 
+                                0xDEADBEEF, 0xCAFEBABE, 0x0BADF00D, 0xBAADF00D}};
+  result = uint256_lshift(randnum, 64);
+  ASSERT_SAME(expected64, result);
+}
+

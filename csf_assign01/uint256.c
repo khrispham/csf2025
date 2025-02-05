@@ -178,6 +178,7 @@ UInt256 uint256_add( UInt256 left, UInt256 right ) {
 
 // Compute the difference of two UInt256 values.
 UInt256 uint256_sub( UInt256 left, UInt256 right ) {
+  //computing result = a - b = a + -b
   UInt256 result = uint256_add(left, uint256_negate(right));
   return result;
 }
@@ -197,6 +198,7 @@ UInt256 uint256_negate( UInt256 val ) {
   return result;
 }
 
+//printing for debug purposes
 void uint256_print(UInt256 val) {
   for (int j = 7; j >= 0; j--) {
     for (int i = 31; i >= 0; i--) {
@@ -214,7 +216,7 @@ UInt256 uint256_mul( UInt256 left, UInt256 right ) {
   for (int index = 0; index < 8; index++){
     for (int bitindex = 0; bitindex < 32; bitindex++){
       if((right.data[index] & (1u << bitindex)) == (1u << bitindex)){
-        //1 at index n, multiply left by 2^n
+        //if nth bit is 1, multiply left value by 2^n
         term = uint256_lshift(left, index*32 + bitindex);
         product = uint256_add(product, term);
       }
@@ -241,11 +243,14 @@ UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
       left = 0;
     }
     if (i + indexshift < 8) {
+      //assign right part to appropriate index
       temp.data[i + indexshift] = right;
     }
     if (i + indexshift + 1 < 8) {
+      //assign left part to appropriate index
       temp.data[i + indexshift + 1] = left;
     }
+    //store current index's shifted value to result, then reset temp
     result = uint256_add(result, temp);
     temp = uint256_create_from_u32(0);
   }
