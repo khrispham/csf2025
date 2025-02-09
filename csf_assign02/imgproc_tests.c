@@ -114,6 +114,8 @@ void test_get_r( TestObjs *objs );
 void test_get_g( TestObjs *objs );
 void test_get_b( TestObjs *objs );
 void test_get_a( TestObjs *objs );
+void test_make_pixel( TestObjs *objs );
+void test_to_grayscale( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -135,6 +137,8 @@ int main( int argc, char **argv ) {
   TEST( test_get_g );
   TEST( test_get_b );
   TEST( test_get_a );
+  TEST( test_make_pixel );
+  TEST( test_to_grayscale );
 
   TEST_FINI();
 }
@@ -394,6 +398,68 @@ void test_get_a( TestObjs *objs ) {
   ASSERT(alpha2 == 0x99);
   uint32_t alpha3 = get_a(img.data[3]);
   ASSERT(alpha3 == 0xCC);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_make_pixel( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  img.data[0] = 0xAB112233;
+  img.data[1] = 0xCD445566;
+  img.data[2] = 0xEF778899;
+  img.data[3] = 0x11AABBCC;
+
+  // Test each pixel
+  uint32_t p0 = make_pixel(0xAB, 0x11, 0x22, 0x33);
+  ASSERT(p0 == img.data[0]);
+  uint32_t p1 = make_pixel(0xCD, 0x44, 0x55, 0x66);
+  ASSERT(p1 == img.data[1]);
+  uint32_t p2 = make_pixel(0xEF, 0x77, 0x88, 0x99);
+  ASSERT(p2 == img.data[2]);
+  uint32_t p3 = make_pixel(0x11, 0xAA, 0xBB, 0xCC);
+  ASSERT(p3 == img.data[3]);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_to_grayscale( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  img.data[0] = 0xFF000000;
+  img.data[1] = 0x00FF0000;
+  img.data[2] = 0x0000FF00;
+  img.data[3] = 0xFFFFFFFF;
+
+  // Test each pixel
+  uint32_t p0 = to_grayscale(img.data[0]);
+  ASSERT(p0 == 0x4E);
+  uint32_t p1 = to_grayscale(img.data[1]);
+  ASSERT(p1 == 0x7F);
+  uint32_t p2 = to_grayscale(img.data[2]);
+  ASSERT(p2 == 0x30);
+  uint32_t p3 = to_grayscale(img.data[3]);
+  ASSERT(p3 == 0xFF);
 
   // Clean up allocated memory.
   free(img.data);
