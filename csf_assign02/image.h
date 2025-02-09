@@ -17,6 +17,11 @@ struct Image {
   uint32_t *data;
 };
 
+uint32_t get_r( uint32_t pixel );
+uint32_t get_g( uint32_t pixel );
+uint32_t get_b( uint32_t pixel );
+uint32_t get_a( uint32_t pixel );
+
 // Initialize an Image struct instance by creating a pixel
 // buffer large enough to accommodate an image of the specified
 // dimensions, initialzing all pixels to opaque black,

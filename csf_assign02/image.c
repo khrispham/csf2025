@@ -5,6 +5,33 @@
 
 int png_init_called;
 
+//helper functions
+uint32_t get_r( uint32_t pixel ){
+  uint32_t mask = ((1 << 8) - 1) << 24;
+  uint32_t rval = (pixel & mask) >> 24;
+  return rval;
+};
+uint32_t get_g( uint32_t pixel ){
+  uint32_t mask = ((1 << 8) - 1) << 16;
+  uint32_t gval = (pixel & mask) >> 16;
+  return gval;
+};
+uint32_t get_b( uint32_t pixel ){
+  uint32_t mask = ((1 << 8) - 1) << 8;
+  uint32_t bval = (pixel & mask) >> 8;
+  return bval;
+};
+uint32_t get_a( uint32_t pixel ){
+  uint32_t mask = (1 << 8) - 1;
+  uint32_t aval = pixel & mask;
+  return aval;
+};
+uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a );
+uint32_t to_grayscale( uint32_t pixel );
+int64_t gradient( int64_t x, int64_t max );
+int32_t compute_index( struct Image *img, int32_t col, int32_t row );
+
+
 int is_little_endian(void) {
   int32_t x = 1;
   return *((char *) &x) == 1;

@@ -110,6 +110,10 @@ void test_rgb_basic( TestObjs *objs );
 void test_grayscale_basic( TestObjs *objs );
 void test_fade_basic( TestObjs *objs );
 void test_kaleidoscope_basic( TestObjs *objs );
+void test_get_r( TestObjs *objs );
+void test_get_g( TestObjs *objs );
+void test_get_b( TestObjs *objs );
+void test_get_a( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -127,6 +131,10 @@ int main( int argc, char **argv ) {
   TEST( test_grayscale_basic );
   TEST( test_fade_basic );
   TEST( test_kaleidoscope_basic );
+  TEST( test_get_r );
+  TEST( test_get_g );
+  TEST( test_get_b );
+  TEST( test_get_a );
 
   TEST_FINI();
 }
@@ -250,9 +258,162 @@ void destroy_img( struct Image *img ) {
   free( img );
 }
 
+uint32_t randomRGBA(void) {
+  // Generate a random 32-bit integer.
+  // This assumes that each call to rand() produces enough randomness for a byte,
+  // though for better randomness consider using a proper random number generator.
+  uint32_t red   = (uint32_t)(rand() % 256);
+  uint32_t green = (uint32_t)(rand() % 256);
+  uint32_t blue  = (uint32_t)(rand() % 256);
+  uint32_t alpha = (uint32_t)(rand() % 256);
+
+  // Pack the channels into a single 32-bit value: 0xRRGGBBAA.
+  return (red << 24) | (green << 16) | (blue << 8) | (alpha);
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Test functions
 ////////////////////////////////////////////////////////////////////////
+
+void test_get_r( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
+  // For example:
+  img.data[0] = 0xAB112233;
+  img.data[1] = 0xCD445566;
+  img.data[2] = 0xEF778899;
+  img.data[3] = 0x11AABBCC;
+  // You can set additional pixels if desired.
+  // (For this test, we'll check the first two.)
+
+  // Test each pixel
+  uint32_t red0 = get_r(img.data[0]);
+  ASSERT(red0 == 0xAB);
+  uint32_t red1 = get_r(img.data[1]);
+  ASSERT(red1 == 0xCD);
+  uint32_t red2 = get_r(img.data[2]);
+  ASSERT(red2 == 0xEF);
+  uint32_t red3 = get_r(img.data[3]);
+  ASSERT(red3 == 0x11);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_get_g( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
+  // For example:
+  img.data[0] = 0xAB112233;
+  img.data[1] = 0xCD445566;
+  img.data[2] = 0xEF778899;
+  img.data[3] = 0x11AABBCC;
+  // You can set additional pixels if desired.
+  // (For this test, we'll check the first two.)
+
+  // Test each pixel
+  uint32_t green0 = get_g(img.data[0]);
+  ASSERT(green0 == 0x11);
+  uint32_t green1 = get_g(img.data[1]);
+  ASSERT(green1 == 0x44);
+  uint32_t green2 = get_g(img.data[2]);
+  ASSERT(green2 == 0x77);
+  uint32_t green3 = get_g(img.data[3]);
+  ASSERT(green3 == 0xAA);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_get_b( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
+  // For example:
+  img.data[0] = 0xAB112233;
+  img.data[1] = 0xCD445566;
+  img.data[2] = 0xEF778899;
+  img.data[3] = 0x11AABBCC;
+  // You can set additional pixels if desired.
+  // (For this test, we'll check the first two.)
+
+  // Test each pixel
+  uint32_t blue0 = get_b(img.data[0]);
+  ASSERT(blue0 == 0x22);
+  uint32_t blue1 = get_b(img.data[1]);
+  ASSERT(blue1 == 0x55);
+  uint32_t blue2 = get_b(img.data[2]);
+  ASSERT(blue2 == 0x88);
+  uint32_t blue3 = get_b(img.data[3]);
+  ASSERT(blue3 == 0xBB);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_get_a( TestObjs *objs ) {
+  // Create an image with 4 pixels
+  struct Image img;
+  img.width = 2;
+  img.height = 2;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with known values.
+  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
+  // For example:
+  img.data[0] = 0xAB112233;
+  img.data[1] = 0xCD445566;
+  img.data[2] = 0xEF778899;
+  img.data[3] = 0x11AABBCC;
+  // You can set additional pixels if desired.
+  // (For this test, we'll check the first two.)
+
+  // Test each pixel
+  uint32_t alpha0 = get_a(img.data[0]);
+  ASSERT(alpha0 == 0x33);
+  uint32_t alpha1 = get_a(img.data[1]);
+  ASSERT(alpha1 == 0x66);
+  uint32_t alpha2 = get_a(img.data[2]);
+  ASSERT(alpha2 == 0x99);
+  uint32_t alpha3 = get_a(img.data[3]);
+  ASSERT(alpha3 == 0xCC);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
 
 void test_rgb_basic( TestObjs *objs ) {
   struct Picture smiley_rgb_pic = {
