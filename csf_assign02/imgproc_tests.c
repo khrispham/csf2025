@@ -287,14 +287,10 @@ void test_get_r( TestObjs *objs ) {
   }
   
   // Set up pixel data with known values.
-  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
-  // For example:
   img.data[0] = 0xAB112233;
   img.data[1] = 0xCD445566;
   img.data[2] = 0xEF778899;
   img.data[3] = 0x11AABBCC;
-  // You can set additional pixels if desired.
-  // (For this test, we'll check the first two.)
 
   // Test each pixel
   uint32_t red0 = get_r(img.data[0]);
@@ -322,14 +318,10 @@ void test_get_g( TestObjs *objs ) {
   }
   
   // Set up pixel data with known values.
-  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
-  // For example:
   img.data[0] = 0xAB112233;
   img.data[1] = 0xCD445566;
   img.data[2] = 0xEF778899;
   img.data[3] = 0x11AABBCC;
-  // You can set additional pixels if desired.
-  // (For this test, we'll check the first two.)
 
   // Test each pixel
   uint32_t green0 = get_g(img.data[0]);
@@ -357,14 +349,10 @@ void test_get_b( TestObjs *objs ) {
   }
   
   // Set up pixel data with known values.
-  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
-  // For example:
   img.data[0] = 0xAB112233;
   img.data[1] = 0xCD445566;
   img.data[2] = 0xEF778899;
   img.data[3] = 0x11AABBCC;
-  // You can set additional pixels if desired.
-  // (For this test, we'll check the first two.)
 
   // Test each pixel
   uint32_t blue0 = get_b(img.data[0]);
@@ -392,14 +380,10 @@ void test_get_a( TestObjs *objs ) {
   }
   
   // Set up pixel data with known values.
-  // Assume each pixel is stored in ARGB format, with the red channel in the top 8 bits.
-  // For example:
   img.data[0] = 0xAB112233;
   img.data[1] = 0xCD445566;
   img.data[2] = 0xEF778899;
   img.data[3] = 0x11AABBCC;
-  // You can set additional pixels if desired.
-  // (For this test, we'll check the first two.)
 
   // Test each pixel
   uint32_t alpha0 = get_a(img.data[0]);
