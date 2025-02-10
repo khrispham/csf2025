@@ -65,6 +65,10 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
 
     // Initialize the output image
     img_init(output_img, 2 * input_img->width, 2 * input_img->height);
+    if (output_img->data == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
     //Quadrant A
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
