@@ -47,12 +47,19 @@ uint32_t to_grayscale( uint32_t pixel ){
   return y;
 };
 
+/*
 int64_t gradient( int64_t x, int64_t max ){
-  int64_t g = 1000000-pow((floor((2000000000*x)/(1000000*max))-1,000), 2);
+  int64_t g = 1000000-pow((floor((2000000000*x)/(1000000*max))-1000), 2);
   return g;
 }
-int32_t compute_index( struct Image *img, int32_t col, int32_t row );
+*/
+int32_t compute_index( struct Image *img, int32_t col, int32_t row ){
+  return row*img->width + col;
+};
 
+////////////////////////////////////////////////////////////////////////
+// Image functions
+////////////////////////////////////////////////////////////////////////
 
 int is_little_endian(void) {
   int32_t x = 1;

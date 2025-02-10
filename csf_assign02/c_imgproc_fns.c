@@ -1,8 +1,9 @@
 // C implementations of image processing functions
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "imgproc.h"
+#include "image.h"
 
 // TODO: define your helper functions here
 
@@ -14,7 +15,14 @@
 //   output_img - pointer to the output Image (in which the transformed
 //                pixels should be stored)
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
-  // TODO: implement
+  img_init(output_img, input_img->width, input_img->height);
+  if (output_img->data == NULL) {
+    fprintf(stderr, "Memory allocation failed.\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int i = 0; i < (input_img->height*input_img->width-1); i++){
+    output_img->data[i] = to_grayscale(input_img->data[i]);
+  }
 }
 
 // Render an output image containing 4 replicas of the original image,

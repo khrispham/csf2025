@@ -116,6 +116,8 @@ void test_get_b( TestObjs *objs );
 void test_get_a( TestObjs *objs );
 void test_make_pixel( TestObjs *objs );
 void test_to_grayscale( TestObjs *objs );
+//void test_gradient( TestObjs *objs );
+void test_compute_index( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
 int main( int argc, char **argv ) {
@@ -139,6 +141,8 @@ int main( int argc, char **argv ) {
   TEST( test_get_a );
   TEST( test_make_pixel );
   TEST( test_to_grayscale );
+  //TEST( test_gradient );
+  TEST( test_compute_index );
 
   TEST_FINI();
 }
@@ -264,14 +268,12 @@ void destroy_img( struct Image *img ) {
 
 uint32_t randomRGBA(void) {
   // Generate a random 32-bit integer.
-  // This assumes that each call to rand() produces enough randomness for a byte,
-  // though for better randomness consider using a proper random number generator.
   uint32_t red   = (uint32_t)(rand() % 256);
   uint32_t green = (uint32_t)(rand() % 256);
   uint32_t blue  = (uint32_t)(rand() % 256);
   uint32_t alpha = (uint32_t)(rand() % 256);
 
-  // Pack the channels into a single 32-bit value: 0xRRGGBBAA.
+  // Pack the channels into a single 32-bit value.
   return (red << 24) | (green << 16) | (blue << 8) | (alpha);
 }
 
@@ -460,6 +462,35 @@ void test_to_grayscale( TestObjs *objs ) {
   ASSERT(p2 == 0x30);
   uint32_t p3 = to_grayscale(img.data[3]);
   ASSERT(p3 == 0xFF);
+
+  // Clean up allocated memory.
+  free(img.data);
+}
+
+void test_compute_index( TestObjs *objs ) {
+  // Create an image with 64 pixels
+  struct Image img;
+  img.width = 8;
+  img.height = 8;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+  
+  // Set up pixel data with random values.
+  for(int i = 0; i < (img.width * img.height); i++){
+    img.data[i] = randomRGBA();
+  }
+
+  int index = 0;
+  // Test each pixel
+  for(int row = 0; row < img.height; row++){
+    for(int col = 0; col < img.width; col++){
+      ASSERT(img.data[compute_index(&img, col, row)] == img.data[index]);
+      index++;
+    }
+  }
 
   // Clean up allocated memory.
   free(img.data);
