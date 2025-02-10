@@ -53,7 +53,53 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
 //                width and height twice the width/height of the
 //                input image)
 void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
-  // TODO: implement
+
+    // Initialize the output image
+    img_init(output_img, 2 * input_img->width, 2 * input_img->height);
+    //Quadrant B
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            int32_t b_col = col;
+            int32_t b_row = row;
+            //make the new pixel of the output the same for quadrant A
+            output_img->data[compute_index(output_img, col, row)] = make_pixel(get_r(pixel), get_g(pixel), get_b(pixel), get_a(pixel)); 
+        }
+    }
+    //Quadrant B
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            int32_t b_col = col;
+            int32_t b_row = row;
+            //make the new pixel of the output the same for quadrant A
+            output_img->data[compute_index(output_img, col + input_img->width, row)] = make_pixel(get_r(pixel), 0, 0, get_a(pixel)); 
+        }
+    //Quadrant C
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            int32_t b_col = col;
+            int32_t b_row = row;
+            //make the new pixel of the output the same for quadrant A
+            output_img->data[compute_index(output_img, col, row + input_img->height)] = make_pixel(0, get_g(pixel), 0, get_a(pixel)); 
+        }
+    }
+    //Quadrant D
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            int32_t b_col = col;
+            int32_t b_row = row;
+            //make the new pixel of the output the same for quadrant A
+            output_img->data[compute_index(output_img, col + input_img->width, row + input_img->height)] = make_pixel(0, 0, get_b(pixel), get_a(pixel)); 
+        }
+    }
+
 }
 
 // Render a "faded" version of the input image.
