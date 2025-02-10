@@ -44,7 +44,8 @@ uint32_t to_grayscale( uint32_t pixel ){
   uint32_t g = get_g(pixel);
   uint32_t b = get_b(pixel);
   uint32_t y = floor((79*r+128*g+49*b)/256);
-  return y;
+  uint32_t result = make_pixel(y, y, y, get_a(pixel));
+  return result;
 };
 
 /*
