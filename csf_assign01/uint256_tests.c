@@ -611,7 +611,7 @@ void test_lshift_edgecases() {
   result = uint256_lshift(highest32, 32);
   ASSERT_SAME(zero, result);
 
-  // Shift lowest bit by 32
+  // Shift lowest index by 32
   UInt256 low32 = {{0xFFFFFFFF, 0, 0, 0, 0, 0, 0, 0}};
   UInt256 expectedlow32 = {{0, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0}};
   result = uint256_lshift(low32, 32);

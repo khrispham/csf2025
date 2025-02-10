@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "imgproc.h"
 #include "image.h"
 
@@ -15,23 +16,24 @@
 //   output_img - pointer to the output Image (in which the transformed
 //                pixels should be stored)
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
-  img_init(output_img, input_img->width, input_img->height);
-  if (output_img->data == NULL) {
-    fprintf(stderr, "Memory allocation failed.\n");
-    exit(EXIT_FAILURE);
-  }
-  // for (int i = 0; i < (input_img->height*input_img->width-1); i++){
-  //   output_img->data[i] = to_grayscale(input_img->data[i]);
-  // }
+    //initialize output image
+    img_init(output_img, input_img->width, input_img->height);
+    if (output_img->data == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    // for (int i = 0; i < (input_img->height*input_img->width-1); i++){
+    //   output_img->data[i] = to_grayscale(input_img->data[i]);
+    // }
 
-  for (int32_t row = 0; row < input_img->height; row++) {
-      for (int32_t col = 0; col < input_img->width; col++) {
-          // Get the current pixel from the input image
-          uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
-          output_img->data[compute_index(output_img, col, row)] = to_grayscale(pixel);
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            output_img->data[compute_index(output_img, col, row)] = to_grayscale(pixel);
 
-      }
-  }
+        }
+    }
 }
 
 // Render an output image containing 4 replicas of the original image,
@@ -119,7 +121,27 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
 //   input_img - pointer to the input Image
 //   output_img - pointer to the output Image
 void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
-  // TODO: implement
+    // Initialize the output image
+    img_init(output_img, input_img->width, input_img->height);
+    if (output_img->data == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int32_t row = 0; row < input_img->height; row++) {
+        for (int32_t col = 0; col < input_img->width; col++) {
+            // Get the current pixel from the input image
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            // Compute the two gradient values
+            int64_t gradr = gradient(row, input_img->height);
+            int64_t gradc = gradient(col, input_img->width);
+            // Compute each color component
+            int64_t gradred = floor(gradc*gradr*get_r(pixel)/1000000000000);
+            int64_t gradgreen = floor(gradc*gradr*get_g(pixel)/1000000000000);
+            int64_t gradblue = floor(gradc*gradr*get_b(pixel)/1000000000000);
+            //make the new pixel of the output
+            output_img->data[compute_index(output_img, col, row)] = make_pixel(gradred, gradgreen, gradblue, get_a(pixel)); 
+        }
+    }
 }
 
 // Render a "kaleidoscope" transformation of input_img in output_img.
