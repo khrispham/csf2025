@@ -184,6 +184,30 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
 //   1 if successful, 0 if the transformation fails because the
 //   width and height of input_img are not the same.
 int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
-  // TODO: implement
-  return 0;
+    // Ensure input image is square
+    if (input_img->width != input_img->height) {
+        return 0;
+    }
+    
+    int adjusted_size = input_img->width; 
+    if (adjusted_size % 2 == 1) {
+        adjusted_size++;
+    }
+
+    // Initialize the output image
+    img_init(output_img, adjusted_size, adjusted_size);
+    if (output_img->data == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    for (int row = 0; row < adjusted_size/2; row++) {
+        for (int col = row; col < adjusted_size/2; col++) {
+            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            output_img->data[compute_index(output_img, col, row)] = pixel;
+        }
+    }
+
+
+
 }
