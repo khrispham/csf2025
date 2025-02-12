@@ -278,162 +278,217 @@ uint32_t randomRGBA(void) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Test functions
+// Test helper functions
 ////////////////////////////////////////////////////////////////////////
 
 void test_get_r( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xAB112233;
-  img.data[1] = 0xCD445566;
-  img.data[2] = 0xEF778899;
-  img.data[3] = 0x11AABBCC;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t red0 = get_r(img.data[0]);
-  ASSERT(red0 == 0xAB);
-  uint32_t red1 = get_r(img.data[1]);
-  ASSERT(red1 == 0xCD);
-  uint32_t red2 = get_r(img.data[2]);
-  ASSERT(red2 == 0xEF);
-  uint32_t red3 = get_r(img.data[3]);
-  ASSERT(red3 == 0x11);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = get_r(red);
+  ASSERT(newred == 0xFF);
+
+  uint32_t newgreen = get_r(green);
+  ASSERT(newgreen == 0x00);
+
+  uint32_t newblue = get_r(blue);
+  ASSERT(newblue == 0x00);
+
+  uint32_t newblack = get_r(black);
+  ASSERT(newblack == 0x00);
+
+  uint32_t newwhite = get_r(white);
+  ASSERT(newwhite == 0xFF);
+
+  uint32_t newfunny = get_r(funny);
+  ASSERT(newfunny == 0x69);
+
+  uint32_t newtransparent = get_r(transparent);
+  ASSERT(newtransparent == 0xAB);
+
+  uint32_t newrandom1 = get_r(random1);
+  ASSERT(newrandom1 == 0x82);
+
+  uint32_t newrandom2 = get_r(random2);
+  ASSERT(newrandom2 == 0x01);  
 }
 
 void test_get_g( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xAB112233;
-  img.data[1] = 0xCD445566;
-  img.data[2] = 0xEF778899;
-  img.data[3] = 0x11AABBCC;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t green0 = get_g(img.data[0]);
-  ASSERT(green0 == 0x11);
-  uint32_t green1 = get_g(img.data[1]);
-  ASSERT(green1 == 0x44);
-  uint32_t green2 = get_g(img.data[2]);
-  ASSERT(green2 == 0x77);
-  uint32_t green3 = get_g(img.data[3]);
-  ASSERT(green3 == 0xAA);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = get_g(red);
+  ASSERT(newred == 0x00);
+
+  uint32_t newgreen = get_g(green);
+  ASSERT(newgreen == 0xFF);
+
+  uint32_t newblue = get_g(blue);
+  ASSERT(newblue == 0x00);
+
+  uint32_t newblack = get_g(black);
+  ASSERT(newblack == 0x00);
+
+  uint32_t newwhite = get_g(white);
+  ASSERT(newwhite == 0xFF);
+
+  uint32_t newfunny = get_g(funny);
+  ASSERT(newfunny == 0x69);
+
+  uint32_t newtransparent = get_g(transparent);
+  ASSERT(newtransparent == 0xCD);
+
+  uint32_t newrandom1 = get_g(random1);
+  ASSERT(newrandom1 == 0x45);
+
+  uint32_t newrandom2 = get_g(random2);
+  ASSERT(newrandom2 == 0x82); 
 }
 
 void test_get_b( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xAB112233;
-  img.data[1] = 0xCD445566;
-  img.data[2] = 0xEF778899;
-  img.data[3] = 0x11AABBCC;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t blue0 = get_b(img.data[0]);
-  ASSERT(blue0 == 0x22);
-  uint32_t blue1 = get_b(img.data[1]);
-  ASSERT(blue1 == 0x55);
-  uint32_t blue2 = get_b(img.data[2]);
-  ASSERT(blue2 == 0x88);
-  uint32_t blue3 = get_b(img.data[3]);
-  ASSERT(blue3 == 0xBB);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = get_b(red);
+  ASSERT(newred == 0x00);
+
+  uint32_t newgreen = get_b(green);
+  ASSERT(newgreen == 0x00);
+
+  uint32_t newblue = get_b(blue);
+  ASSERT(newblue == 0xFF);
+
+  uint32_t newblack = get_b(black);
+  ASSERT(newblack == 0x00);
+
+  uint32_t newwhite = get_b(white);
+  ASSERT(newwhite == 0xFF);
+
+  uint32_t newfunny = get_b(funny);
+  ASSERT(newfunny == 0x69);
+
+  uint32_t newtransparent = get_b(transparent);
+  ASSERT(newtransparent == 0xEF);
+
+  uint32_t newrandom1 = get_b(random1);
+  ASSERT(newrandom1 == 0x25);
+
+  uint32_t newrandom2 = get_b(random2);
+  ASSERT(newrandom2 == 0xDC);
 }
 
 void test_get_a( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xAB112233;
-  img.data[1] = 0xCD445566;
-  img.data[2] = 0xEF778899;
-  img.data[3] = 0x11AABBCC;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t alpha0 = get_a(img.data[0]);
-  ASSERT(alpha0 == 0x33);
-  uint32_t alpha1 = get_a(img.data[1]);
-  ASSERT(alpha1 == 0x66);
-  uint32_t alpha2 = get_a(img.data[2]);
-  ASSERT(alpha2 == 0x99);
-  uint32_t alpha3 = get_a(img.data[3]);
-  ASSERT(alpha3 == 0xCC);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = get_a(red);
+  ASSERT(newred == 0xFF);
+
+  uint32_t newgreen = get_a(green);
+  ASSERT(newgreen == 0xFF);
+
+  uint32_t newblue = get_a(blue);
+  ASSERT(newblue == 0xFF);
+
+  uint32_t newblack = get_a(black);
+  ASSERT(newblack == 0xFF);
+
+  uint32_t newwhite = get_a(white);
+  ASSERT(newwhite == 0xFF);
+
+  uint32_t newfunny = get_a(funny);
+  ASSERT(newfunny == 0x69);
+
+  uint32_t newtransparent = get_a(transparent);
+  ASSERT(newtransparent == 0x00);
+
+  uint32_t newrandom1 = get_a(random1);
+  ASSERT(newrandom1 == 0xEB);
+
+  uint32_t newrandom2 = get_a(random2);
+  ASSERT(newrandom2 == 0x12);
 }
 
 void test_make_pixel( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xAB112233;
-  img.data[1] = 0xCD445566;
-  img.data[2] = 0xEF778899;
-  img.data[3] = 0x11AABBCC;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t p0 = make_pixel(0xAB, 0x11, 0x22, 0x33);
-  ASSERT(p0 == img.data[0]);
-  uint32_t p1 = make_pixel(0xCD, 0x44, 0x55, 0x66);
-  ASSERT(p1 == img.data[1]);
-  uint32_t p2 = make_pixel(0xEF, 0x77, 0x88, 0x99);
-  ASSERT(p2 == img.data[2]);
-  uint32_t p3 = make_pixel(0x11, 0xAA, 0xBB, 0xCC);
-  ASSERT(p3 == img.data[3]);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = make_pixel(0xFF, 0x00, 0x00, 0xFF);
+  ASSERT(newred == red);
+
+  uint32_t newgreen = make_pixel(0x00, 0xFF, 0x00, 0xFF);
+  ASSERT(newgreen == green);
+
+  uint32_t newblue = make_pixel(0x00, 0x00, 0xFF, 0xFF);
+  ASSERT(newblue == blue);
+
+  uint32_t newblack = make_pixel(0x00, 0x00, 0x00, 0xFF);
+  ASSERT(newblack == black);
+
+  uint32_t newwhite = make_pixel(0xFF, 0xFF, 0xFF, 0xFF);
+  ASSERT(newwhite == white);
+
+  uint32_t newfunny = make_pixel(0x69, 0x69, 0x69, 0x69);
+  ASSERT(newfunny == funny);
+
+  uint32_t newtransparent = make_pixel(0xAB, 0xCD, 0xEF, 0x00);
+  ASSERT(newtransparent == transparent);
+
+  uint32_t newrandom1 = make_pixel(0x82, 0x45, 0x25, 0xEB);
+  ASSERT(newrandom1 == random1);
+
+  uint32_t newrandom2 = make_pixel(0x01, 0x82, 0xDC, 0x12);
+  ASSERT(newrandom2 == random2);
 }
 
 void test_to_grayscale( TestObjs *objs ) {
@@ -448,20 +503,20 @@ void test_to_grayscale( TestObjs *objs ) {
   }
   
   // Set up pixel data with known values.
-  img.data[0] = 0xFF000000;
-  img.data[1] = 0x00FF0000;
-  img.data[2] = 0x0000FF00;
-  img.data[3] = 0xFFFFFFFF;
+  img.data[0] = 0xFF0000FF;
+  img.data[1] = 0x00FF00FF;
+  img.data[2] = 0x0000FFFF;
+  img.data[3] = 0x6496C8FF;
 
   // Test each pixel
   uint32_t p0 = to_grayscale(img.data[0]);
-  ASSERT(p0 == 0x4E);
+  ASSERT(p0 == 0x4E4E4EFF);
   uint32_t p1 = to_grayscale(img.data[1]);
-  ASSERT(p1 == 0x7F);
+  ASSERT(p1 == 0x7F7F7FFF);
   uint32_t p2 = to_grayscale(img.data[2]);
-  ASSERT(p2 == 0x30);
+  ASSERT(p2 == 0x303030FF);
   uint32_t p3 = to_grayscale(img.data[3]);
-  ASSERT(p3 == 0xFF);
+  ASSERT(p3 == 0x909090FF);
 
   // Clean up allocated memory.
   free(img.data);
