@@ -492,34 +492,45 @@ void test_make_pixel( TestObjs *objs ) {
 }
 
 void test_to_grayscale( TestObjs *objs ) {
-  // Create an image with 4 pixels
-  struct Image img;
-  img.width = 2;
-  img.height = 2;
-  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
-  if (img.data == NULL) {
-      fprintf(stderr, "Memory allocation failed.\n");
-      exit(EXIT_FAILURE);
-  }
-  
   // Set up pixel data with known values.
-  img.data[0] = 0xFF0000FF;
-  img.data[1] = 0x00FF00FF;
-  img.data[2] = 0x0000FFFF;
-  img.data[3] = 0x6496C8FF;
+  uint32_t red = 0xFF0000FF;
+  uint32_t green = 0x00FF00FF;
+  uint32_t blue = 0x0000FFFF;
+  uint32_t black = 0x000000FF;
+  uint32_t white = 0xFFFFFFFF;
+  uint32_t funny = 0x69696969;
+  uint32_t transparent = 0xABCDEF00;
+  uint32_t random1 = 0x824525EB;
+  uint32_t random2 = 0x0182DC12;
 
-  // Test each pixel
-  uint32_t p0 = to_grayscale(img.data[0]);
-  ASSERT(p0 == 0x4E4E4EFF);
-  uint32_t p1 = to_grayscale(img.data[1]);
-  ASSERT(p1 == 0x7F7F7FFF);
-  uint32_t p2 = to_grayscale(img.data[2]);
-  ASSERT(p2 == 0x303030FF);
-  uint32_t p3 = to_grayscale(img.data[3]);
-  ASSERT(p3 == 0x909090FF);
 
-  // Clean up allocated memory.
-  free(img.data);
+  // Test each color
+  uint32_t newred = to_grayscale(red);
+  ASSERT(newred == 0x4E4E4EFF);
+
+  uint32_t newgreen = to_grayscale(green);
+  ASSERT(newgreen == 0x7F7F7FFF);
+
+  uint32_t newblue = to_grayscale(blue);
+  ASSERT(newblue == 0x303030FF);
+
+  uint32_t newblack = to_grayscale(black);
+  ASSERT(newblack == 0x000000FF);
+
+  uint32_t newwhite = to_grayscale(white);
+  ASSERT(newwhite == 0xFFFFFFFF);
+
+  uint32_t newfunny = to_grayscale(funny);
+  ASSERT(newfunny == 0x69696969);
+
+  uint32_t newtransparent = to_grayscale(transparent);
+  ASSERT(newtransparent == 0xC9C9C900);
+
+  uint32_t newrandom1 = to_grayscale(random1);
+  ASSERT(newrandom1 == 0x515151EB);
+
+  uint32_t newrandom2 = to_grayscale(random2);
+  ASSERT(newrandom2 == 0x6B6B6B12);
 }
 
 void test_compute_index( TestObjs *objs ) {
