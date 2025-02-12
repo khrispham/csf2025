@@ -189,25 +189,40 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
         return 0;
     }
     
-    int adjusted_size = input_img->width; 
-    if (adjusted_size % 2 == 1) {
-        adjusted_size++;
+    int size = input_img->width; 
+    if (size % 2 == 1) {
+        size++;
     }
 
     // Initialize the output image
-    img_init(output_img, adjusted_size, adjusted_size);
+    img_init(output_img, size, size);
     if (output_img->data == NULL) {
         fprintf(stderr, "Memory allocation failed.\n");
         exit(EXIT_FAILURE);
     }
     
-    for (int row = 0; row < adjusted_size/2; row++) {
-        for (int col = row; col < adjusted_size/2; col++) {
+    for (int row = 0; row < size/2; row++) {
+        for (int col = row; col < size/2; col++) {
             uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            //A
+            output_img->data[compute_index(output_img, row, col)] = pixel;
+            //B
             output_img->data[compute_index(output_img, col, row)] = pixel;
+
+            //top right quadrant
+            output_img->data[compute_index(output_img, size-1-row, col)] = pixel;
+            output_img->data[compute_index(output_img, size-1- col, row)] = pixel; 
+
+            //bottom left quadrant
+            output_img->data[compute_index(output_img,row, size - 1 - col)]  = pixel;
+            output_img->data[compute_index(output_img,col, size - 1 - row)] = pixel;
+
+            //bottom right quadrant
+            output_img->data[compute_index(output_img,size - 1 -row, size - 1 - col)]  = pixel;
+            output_img->data[compute_index(output_img,size - 1 -col, size - 1 - row)]  = pixel;
+
         }
     }
-
-
+    return 1;
 
 }
