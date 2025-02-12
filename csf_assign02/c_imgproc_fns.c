@@ -243,41 +243,65 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
     if (input_img->width != input_img->height) {
         return 0;
     }
-    
+
     int size = input_img->width; 
     if (size % 2 == 1) {
-        size++;
+        size++; 
+    }
+
+    // Allocate memory for newdata (padded size)
+    uint32_t *newdata = malloc(sizeof(uint32_t) * size * size);
+    if (newdata == NULL) {
+        fprintf(stderr, "Memory allocation failed for newdata.\n");
+        exit(EXIT_FAILURE);
     }
 
     // Initialize the output image
-    img_init(output_img, size, size);
+    img_init(output_img, input_img->width, input_img->height);
     if (output_img->data == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
+        fprintf(stderr, "Memory allocation failed for output_img->data.\n");
+        free(newdata); 
         exit(EXIT_FAILURE);
     }
-    
-    for (int row = 0; row < size/2; row++) {
-        for (int col = row; col < size/2; col++) {
+
+    for (int row = 0; row < size / 2; row++) {
+        for (int col = row; col < size / 2; col++) {
             uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+
+
             //A
-            output_img->data[compute_index(output_img, row, col)] = pixel;
+            newdata[row * size + col] = pixel;
             //B
-            output_img->data[compute_index(output_img, col, row)] = pixel;
+            newdata[col * size + row] = pixel;
 
-            //top right quadrant
-            output_img->data[compute_index(output_img, size-1-row, col)] = pixel;
-            output_img->data[compute_index(output_img, size-1- col, row)] = pixel; 
+            //Mirror A across y axis
+            newdata[row * size + size - col - 1] = pixel;
+            //Mirror B across y axis
+            newdata[col * size + size - row - 1 ] = pixel;
 
-            //bottom left quadrant
-            output_img->data[compute_index(output_img,row, size - 1 - col)]  = pixel;
-            output_img->data[compute_index(output_img,col, size - 1 - row)] = pixel;
 
-            //bottom right quadrant
-            output_img->data[compute_index(output_img,size - 1 -row, size - 1 - col)]  = pixel;
-            output_img->data[compute_index(output_img,size - 1 -col, size - 1 - row)]  = pixel;
+            //Mirror A across x axis Call this C
+            newdata[(size - row - 1)  * size  + col] = pixel;
+            //Mirror B across x axis Call this D
+            newdata[(size - col - 1 )  * size  + row] = pixel;
+
+            //Mirror C across y axis
+            newdata[(size - row - 1)  * size  + size - col - 1] = pixel;
+            //Mirror D across y axis
+            newdata[(size - col - 1)  * size  + size - row - 1] = pixel;
 
         }
     }
+
+    // Copy data from newdata to output_img (original n x n dimensions)
+    for (int row = 0; row < input_img->height; row++) {
+        for (int col = 0; col < input_img->width; col++) {
+            output_img->data[compute_index(output_img, col, row)] = newdata[row * size + col];
+        }
+    }
+
+    // Free the allocated memory for newdata
+    free(newdata);
     return 1;
 
 }
