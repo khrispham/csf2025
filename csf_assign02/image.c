@@ -6,58 +6,6 @@
 
 int png_init_called;
 
-////////////////////////////////////////////////////////////////////////
-// Helper functions
-////////////////////////////////////////////////////////////////////////
-
-uint32_t get_r( uint32_t pixel ){
-  //mask with 1s in bits 24-31
-  uint32_t mask = ((1 << 8) - 1) << 24;
-  uint32_t rval = (pixel & mask) >> 24;
-  return rval;
-};
-uint32_t get_g( uint32_t pixel ){
-  //mask with 1s in bits 16-23
-  uint32_t mask = ((1 << 8) - 1) << 16;
-  uint32_t gval = (pixel & mask) >> 16;
-  return gval;
-};
-uint32_t get_b( uint32_t pixel ){
-  //mask with 1s in bits 8-15
-  uint32_t mask = ((1 << 8) - 1) << 8;
-  uint32_t bval = (pixel & mask) >> 8;
-  return bval;
-};
-uint32_t get_a( uint32_t pixel ){
-  //mask with 1s in bits 0-7
-  uint32_t mask = (1 << 8) - 1;
-  uint32_t aval = pixel & mask;
-  return aval;
-};
-
-uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ){
-  return (r << 24) | (g << 16) | (b << 8) | (a);
-};
-
-uint32_t to_grayscale( uint32_t pixel ){
-  uint32_t r = get_r(pixel);
-  uint32_t g = get_g(pixel);
-  uint32_t b = get_b(pixel);
-  uint32_t y = floor((79*r+128*g+49*b)/256);
-  uint32_t result = make_pixel(y, y, y, get_a(pixel));
-  return result;
-};
-
-
-int64_t gradient( int64_t x, int64_t max ){
-  int64_t temp = floor((2000000000*x)/(1000000*max))-1000;
-  int64_t g = 1000000 - (temp * temp);
-  return g;
-}
-
-int32_t compute_index( struct Image *img, int32_t col, int32_t row ){
-  return row*img->width + col;
-};
 
 ////////////////////////////////////////////////////////////////////////
 // Image functions

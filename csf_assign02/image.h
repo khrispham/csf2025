@@ -17,14 +17,6 @@ struct Image {
   uint32_t *data;
 };
 
-uint32_t get_r( uint32_t pixel );
-uint32_t get_g( uint32_t pixel );
-uint32_t get_b( uint32_t pixel );
-uint32_t get_a( uint32_t pixel );
-uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a );
-uint32_t to_grayscale( uint32_t pixel );
-int64_t gradient( int64_t x, int64_t max );
-int32_t compute_index( struct Image *img, int32_t col, int32_t row );
 
 // Initialize an Image struct instance by creating a pixel
 // buffer large enough to accommodate an image of the specified
