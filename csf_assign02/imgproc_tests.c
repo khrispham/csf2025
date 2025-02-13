@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "tctest.h"
 #include "imgproc.h"
 
@@ -116,7 +117,7 @@ void test_get_b( TestObjs *objs );
 void test_get_a( TestObjs *objs );
 void test_make_pixel( TestObjs *objs );
 void test_to_grayscale( TestObjs *objs );
-//void test_gradient( TestObjs *objs );
+void test_gradient_and_fade( TestObjs *objs );
 void test_compute_index( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
@@ -141,7 +142,7 @@ int main( int argc, char **argv ) {
   TEST( test_get_a );
   TEST( test_make_pixel );
   TEST( test_to_grayscale );
-  //TEST( test_gradient );
+  TEST( test_gradient_and_fade );
   TEST( test_compute_index );
 
   TEST_FINI();
@@ -273,7 +274,7 @@ uint32_t randomRGBA(void) {
   uint32_t blue  = (uint32_t)(rand() % 256);
   uint32_t alpha = (uint32_t)(rand() % 256);
 
-  // Pack the channels into a single 32-bit value.
+  // Pack the colors into a single value.
   return (red << 24) | (green << 16) | (blue << 8) | (alpha);
 }
 
@@ -531,6 +532,53 @@ void test_to_grayscale( TestObjs *objs ) {
 
   uint32_t newrandom2 = to_grayscale(random2);
   ASSERT(newrandom2 == 0x6B6B6B12);
+}
+
+void test_gradient_and_fade( TestObjs *objs ){
+  // Create an image with 81 pixels
+  struct Image img;
+  img.width = 10;
+  img.height = 10;
+  img.data = malloc(sizeof(uint32_t) * img.width * img.height);
+  if (img.data == NULL) {
+      fprintf(stderr, "Memory allocation failed.\n");
+      exit(EXIT_FAILURE);
+  }
+
+  // Set up pixel data with random values.
+  for(int i = 0; i < (img.width * img.height); i++){
+    img.data[i] = randomRGBA();
+  }
+
+  uint32_t center = img.data[compute_index(&img, 5, 5)];
+  uint32_t newcenter = to_fade(gradient(5, 10), gradient(5, 10), center); 
+  ASSERT(newcenter == center);
+  
+  uint32_t topleft = img.data[compute_index(&img, 0, 0)];
+  uint32_t newtl = to_fade(gradient(0, 10), gradient(0, 10), topleft);
+  uint32_t expectedtl = make_pixel(0x00, 0x00, 0x00, get_a(topleft));
+  ASSERT(newtl = expectedtl);
+
+  uint32_t topright = img.data[compute_index(&img, 0, 9)];
+  uint32_t newtr = to_fade(gradient(0, 10), gradient(9, 10), topright);
+  uint32_t expectedtr = make_pixel(0x00, 0x00, 0x00, get_a(topright));
+  //printf("\n0x%08X\n", newtr);
+  //printf("0x%08X\n", expectedtr);
+  ASSERT(newtr = expectedtr);
+
+  uint32_t bottomleft = img.data[compute_index(&img, 9, 0)];
+  uint32_t newbl = to_fade(gradient(9, 10), gradient(0, 10), bottomleft);
+  uint32_t expectedbl = make_pixel(0x00, 0x00, 0x00, get_a(bottomleft));
+  ASSERT(newbl = expectedbl);
+
+  uint32_t bottomright = img.data[compute_index(&img, 9, 9)];
+  uint32_t newbr = to_fade(gradient(9, 10), gradient(9, 10), bottomright);
+  uint32_t expectedbr = make_pixel(0x00, 0x00, 0x00, get_a(bottomright));
+  ASSERT(newbr = expectedbr);
+
+  //uint32_t bottomright = img.data[compute_index(&img, 8, 8)];
+
+  
 }
 
 void test_compute_index( TestObjs *objs ) {

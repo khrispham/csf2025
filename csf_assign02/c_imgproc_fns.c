@@ -57,6 +57,14 @@ int64_t gradient( int64_t x, int64_t max ){
     return g;
 }
 
+uint32_t to_fade( int64_t gradrow, int64_t gradcol, uint32_t pixel){
+    int64_t gradred = floor(gradcol * gradrow * get_r(pixel)/1000000000000);
+    int64_t gradgreen = floor(gradcol * gradrow * get_g(pixel)/1000000000000);
+    int64_t gradblue = floor(gradcol * gradrow * get_b(pixel)/1000000000000);
+    uint32_t newpixel = make_pixel(gradred, gradgreen, gradblue, get_a(pixel));
+    return newpixel;
+}
+
 int32_t compute_index( struct Image *img, int32_t col, int32_t row ){
     return row*img->width + col;
 };
@@ -189,12 +197,8 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
             // Compute the two gradient values
             int64_t gradr = gradient(row, input_img->height);
             int64_t gradc = gradient(col, input_img->width);
-            // Compute each color component
-            int64_t gradred = floor(gradc*gradr*get_r(pixel)/1000000000000);
-            int64_t gradgreen = floor(gradc*gradr*get_g(pixel)/1000000000000);
-            int64_t gradblue = floor(gradc*gradr*get_b(pixel)/1000000000000);
             //make the new pixel of the output
-            output_img->data[compute_index(output_img, col, row)] = make_pixel(gradred, gradgreen, gradblue, get_a(pixel)); 
+            output_img->data[compute_index(output_img, col, row)] = to_fade(gradr, gradc, pixel); 
         }
     }
 }

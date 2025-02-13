@@ -14,6 +14,7 @@ uint32_t get_a( uint32_t pixel );
 uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a );
 uint32_t to_grayscale( uint32_t pixel );
 int64_t gradient( int64_t x, int64_t max );
+uint32_t to_fade( int64_t gradrow, int64_t gradcol, uint32_t pixel);
 int32_t compute_index( struct Image *img, int32_t col, int32_t row );
 
 // Convert input pixels to grayscale.
