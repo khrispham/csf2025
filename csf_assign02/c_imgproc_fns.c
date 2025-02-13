@@ -79,12 +79,6 @@ int32_t compute_index( struct Image *img, int32_t col, int32_t row ){
 //   output_img - pointer to the output Image (in which the transformed
 //                pixels should be stored)
 void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
-    //initialize output image
-    img_init(output_img, input_img->width, input_img->height);
-    if (output_img->data == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        exit(EXIT_FAILURE);
-    }
     // for (int i = 0; i < (input_img->height*input_img->width-1); i++){
     //   output_img->data[i] = to_grayscale(input_img->data[i]);
     // }
@@ -127,13 +121,6 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
 //                width and height twice the width/height of the
 //                input image)
 void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
-
-    // Initialize the output image
-    img_init(output_img, 2 * input_img->width, 2 * input_img->height);
-    if (output_img->data == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        exit(EXIT_FAILURE);
-    }
     //Quadrant A
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
@@ -184,12 +171,6 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
 //   input_img - pointer to the input Image
 //   output_img - pointer to the output Image
 void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
-    // Initialize the output image
-    img_init(output_img, input_img->width, input_img->height);
-    if (output_img->data == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        exit(EXIT_FAILURE);
-    }
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
@@ -313,8 +294,6 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
     }
 
     else {
-        img_init(output_img, size, size);
-
         // Initialize the output image
         if (output_img->data == NULL) {
             fprintf(stderr, "Memory allocation failed.\n");
