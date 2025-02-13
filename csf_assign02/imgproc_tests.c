@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include "tctest.h"
 #include "imgproc.h"
 
@@ -562,8 +561,6 @@ void test_gradient_and_fade( TestObjs *objs ){
   uint32_t topright = img.data[compute_index(&img, 0, 9)];
   uint32_t newtr = to_fade(gradient(0, 10), gradient(9, 10), topright);
   uint32_t expectedtr = make_pixel(0x00, 0x00, 0x00, get_a(topright));
-  //printf("\n0x%08X\n", newtr);
-  //printf("0x%08X\n", expectedtr);
   ASSERT(newtr = expectedtr);
 
   uint32_t bottomleft = img.data[compute_index(&img, 9, 0)];
@@ -576,9 +573,7 @@ void test_gradient_and_fade( TestObjs *objs ){
   uint32_t expectedbr = make_pixel(0x00, 0x00, 0x00, get_a(bottomright));
   ASSERT(newbr = expectedbr);
 
-  //uint32_t bottomright = img.data[compute_index(&img, 8, 8)];
-
-  
+  free(img.data);
 }
 
 void test_compute_index( TestObjs *objs ) {
