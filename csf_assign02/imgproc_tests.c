@@ -116,7 +116,8 @@ void test_get_b( TestObjs *objs );
 void test_get_a( TestObjs *objs );
 void test_make_pixel( TestObjs *objs );
 void test_to_grayscale( TestObjs *objs );
-void test_gradient_and_fade( TestObjs *objs );
+void test_gradient( TestObjs *objs );
+void test_to_fade( TestObjs *objs );
 void test_compute_index( TestObjs *objs );
 // TODO: add prototypes for additional test functions
 
@@ -141,7 +142,8 @@ int main( int argc, char **argv ) {
   TEST( test_get_a );
   TEST( test_make_pixel );
   TEST( test_to_grayscale );
-  TEST( test_gradient_and_fade );
+  TEST( test_gradient );
+  TEST( test_to_fade );
   TEST( test_compute_index );
 
   TEST_FINI();
@@ -533,7 +535,61 @@ void test_to_grayscale( TestObjs *objs ) {
   ASSERT(newrandom2 == 0x6B6B6B12);
 }
 
-void test_gradient_and_fade( TestObjs *objs ){
+void test_gradient( TestObjs *objs ){
+  //max 10
+  int64_t topleftr = gradient(0, 10);
+  int64_t topleftc = gradient(0, 10);
+  ASSERT(topleftr == 0);
+  ASSERT(topleftc == 0);
+
+  int64_t toprightr = gradient(0, 10);
+  int64_t toprightc = gradient(9, 10);
+  ASSERT(toprightr == 0);
+  ASSERT(toprightc == 360000);
+
+  int64_t bottomleftr = gradient(9, 10);
+  int64_t bottomleftc = gradient(0, 10);
+  ASSERT(bottomleftr == 360000);
+  ASSERT(bottomleftc == 0);
+
+  int64_t bottomrightr = gradient(9, 10);
+  int64_t bottomrightc = gradient(9, 10);
+  ASSERT(bottomrightr == 360000);
+  ASSERT(bottomrightc == 360000);
+
+  int64_t random1r = gradient(4, 10);
+  int64_t random1c = gradient(2, 10);
+  ASSERT(random1r == 960000);
+  ASSERT(random1c == 640000);
+
+  //max 1000
+  int64_t bigtopleftr = gradient(0, 1000);
+  int64_t bigtopleftc = gradient(0, 1000);
+  ASSERT(bigtopleftr == 0);
+  ASSERT(bigtopleftc == 0);
+
+  int64_t bigtoprightr = gradient(0, 1000);
+  int64_t bigtoprightc = gradient(999, 1000);
+  ASSERT(bigtoprightr == 0);
+  ASSERT(bigtoprightc == 3996);
+
+  int64_t bigbottomleftr = gradient(999, 1000);
+  int64_t bigbottomleftc = gradient(0, 1000);
+  ASSERT(bigbottomleftr == 3996);
+  ASSERT(bigbottomleftc == 0);
+
+  int64_t bigbottomrightr = gradient(999, 1000);
+  int64_t bigbottomrightc = gradient(999, 1000);
+  ASSERT(bigbottomrightr == 3996);
+  ASSERT(bigbottomrightc == 3996);
+
+  int64_t random2r = gradient(420, 1000);
+  int64_t random2c = gradient(666, 1000);
+  ASSERT(random2r == 974400);
+  ASSERT(random2c == 889776);
+}
+
+void test_to_fade( TestObjs *objs ){
   // Create an image with 81 pixels
   struct Image img;
   img.width = 10;
@@ -549,29 +605,41 @@ void test_gradient_and_fade( TestObjs *objs ){
     img.data[i] = randomRGBA();
   }
 
-  uint32_t center = img.data[compute_index(&img, 5, 5)];
+  uint32_t center = img.data[compute_index(img.width, 5, 5)];
   uint32_t newcenter = to_fade(gradient(5, 10), gradient(5, 10), center); 
   ASSERT(newcenter == center);
   
-  uint32_t topleft = img.data[compute_index(&img, 0, 0)];
+  uint32_t topleft = img.data[compute_index(img.width, 0, 0)];
   uint32_t newtl = to_fade(gradient(0, 10), gradient(0, 10), topleft);
   uint32_t expectedtl = make_pixel(0x00, 0x00, 0x00, get_a(topleft));
   ASSERT(newtl = expectedtl);
 
-  uint32_t topright = img.data[compute_index(&img, 0, 9)];
+  uint32_t topright = img.data[compute_index(img.width, 0, 9)];
   uint32_t newtr = to_fade(gradient(0, 10), gradient(9, 10), topright);
   uint32_t expectedtr = make_pixel(0x00, 0x00, 0x00, get_a(topright));
   ASSERT(newtr = expectedtr);
 
-  uint32_t bottomleft = img.data[compute_index(&img, 9, 0)];
+  uint32_t bottomleft = img.data[compute_index(img.width, 9, 0)];
   uint32_t newbl = to_fade(gradient(9, 10), gradient(0, 10), bottomleft);
   uint32_t expectedbl = make_pixel(0x00, 0x00, 0x00, get_a(bottomleft));
   ASSERT(newbl = expectedbl);
 
-  uint32_t bottomright = img.data[compute_index(&img, 9, 9)];
+  uint32_t bottomright = img.data[compute_index(img.width, 9, 9)];
   uint32_t newbr = to_fade(gradient(9, 10), gradient(9, 10), bottomright);
   uint32_t expectedbr = make_pixel(0x00, 0x00, 0x00, get_a(bottomright));
   ASSERT(newbr = expectedbr);
+
+  uint32_t random1 = 0x69420FF4;
+  img.data[compute_index(img.width, 2, 4)] = random1;
+  uint32_t newrandom1 = to_fade(gradient(2, 10), gradient(4, 10), random1);
+  uint32_t expectedrandom1 = 0x402809F4;
+  ASSERT(newrandom1 == expectedrandom1);
+
+  uint32_t random2 = 0xDEADBEEF;
+  img.data[compute_index(img.width, 6, 9)] = random2;
+  uint32_t newrandom2 = to_fade(gradient(6, 10), gradient(9, 10), random2);
+  uint32_t expectedrandom2 = 0x4C3B41EF;
+  ASSERT(newrandom2 == expectedrandom2);
 
   free(img.data);
 }
@@ -596,7 +664,7 @@ void test_compute_index( TestObjs *objs ) {
   // Test each pixel
   for(int row = 0; row < img.height; row++){
     for(int col = 0; col < img.width; col++){
-      ASSERT(img.data[compute_index(&img, col, row)] == img.data[index]);
+      ASSERT(img.data[compute_index(img.width, col, row)] == img.data[index]);
       index++;
     }
   }

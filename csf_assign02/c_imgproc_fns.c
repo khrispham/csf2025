@@ -52,21 +52,25 @@ uint32_t to_grayscale( uint32_t pixel ){
 
 
 int64_t gradient( int64_t x, int64_t max ){
-    int64_t temp = floor((2000000000*x)/(1000000*max))-1000;
+    //int64_t temp = floor((2000000000*x)/(1000000*max))-1000;
+    int64_t temp = (2000000000*x)/(1000000*max)-1000;
     int64_t g = 1000000 - (temp * temp);
     return g;
 }
 
 uint32_t to_fade( int64_t gradrow, int64_t gradcol, uint32_t pixel){
-    int64_t gradred = floor(gradcol * gradrow * get_r(pixel)/1000000000000);
-    int64_t gradgreen = floor(gradcol * gradrow * get_g(pixel)/1000000000000);
-    int64_t gradblue = floor(gradcol * gradrow * get_b(pixel)/1000000000000);
+    //int64_t gradred = floor(gradcol * gradrow * get_r(pixel)/1000000000000);
+    //int64_t gradgreen = floor(gradcol * gradrow * get_g(pixel)/1000000000000);
+    //int64_t gradblue = floor(gradcol * gradrow * get_b(pixel)/1000000000000);
+    int64_t gradred = gradcol * gradrow * get_r(pixel)/1000000000000;
+    int64_t gradgreen = gradcol * gradrow * get_g(pixel)/1000000000000;
+    int64_t gradblue = gradcol * gradrow * get_b(pixel)/1000000000000;
     uint32_t newpixel = make_pixel(gradred, gradgreen, gradblue, get_a(pixel));
     return newpixel;
 }
 
-int32_t compute_index( struct Image *img, int32_t col, int32_t row ){
-    return row*img->width + col;
+int32_t compute_index( int32_t width, int32_t col, int32_t row ){
+    return row*width + col;
 };
 
 
@@ -86,8 +90,8 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
-            output_img->data[compute_index(output_img, col, row)] = to_grayscale(pixel);
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
+            output_img->data[compute_index(output_img->width, col, row)] = to_grayscale(pixel);
 
         }
     }
@@ -125,36 +129,36 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
             //make the new pixel of the output the same for quadrant A
-            output_img->data[compute_index(output_img, col, row)] = make_pixel(get_r(pixel), get_g(pixel), get_b(pixel), get_a(pixel)); 
+            output_img->data[compute_index(output_img->width, col, row)] = make_pixel(get_r(pixel), get_g(pixel), get_b(pixel), get_a(pixel)); 
         }
     }
     //Quadrant B
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
             //make the new pixel of the output the same for quadrant A
-            output_img->data[compute_index(output_img, col + input_img->width, row)] = make_pixel(get_r(pixel), 0, 0, get_a(pixel)); 
+            output_img->data[compute_index(output_img->width, col + input_img->width, row)] = make_pixel(get_r(pixel), 0, 0, get_a(pixel)); 
         }
       }
     //Quadrant C
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
             //make the new pixel of the output the same for quadrant A
-            output_img->data[compute_index(output_img, col, row + input_img->height)] = make_pixel(0, get_g(pixel), 0, get_a(pixel)); 
+            output_img->data[compute_index(output_img->width, col, row + input_img->height)] = make_pixel(0, get_g(pixel), 0, get_a(pixel)); 
         }
     }
     //Quadrant D
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
             //make the new pixel of the output the same for quadrant A
-            output_img->data[compute_index(output_img, col + input_img->width, row + input_img->height)] = make_pixel(0, 0, get_b(pixel), get_a(pixel)); 
+            output_img->data[compute_index(output_img->width, col + input_img->width, row + input_img->height)] = make_pixel(0, 0, get_b(pixel), get_a(pixel)); 
         }
     }
 
@@ -174,12 +178,12 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
     for (int32_t row = 0; row < input_img->height; row++) {
         for (int32_t col = 0; col < input_img->width; col++) {
             // Get the current pixel from the input image
-            uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+            uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
             // Compute the two gradient values
             int64_t gradr = gradient(row, input_img->height);
             int64_t gradc = gradient(col, input_img->width);
             //make the new pixel of the output
-            output_img->data[compute_index(output_img, col, row)] = to_fade(gradr, gradc, pixel); 
+            output_img->data[compute_index(output_img->width, col, row)] = to_fade(gradr, gradc, pixel); 
         }
     }
 }
@@ -253,7 +257,7 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
 
         for (int row = 0; row < size / 2; row++) {
             for (int col = row; col < size / 2; col++) {
-                uint32_t pixel = input_img->data[compute_index(input_img, col, row)];
+                uint32_t pixel = input_img->data[compute_index(input_img->width, col, row)];
 
 
                 //A
@@ -283,7 +287,7 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
         // Copy data from newdata to output_img (original n x n dimensions)
         for (int row = 0; row < input_img->height; row++) {
             for (int col = 0; col < input_img->width; col++) {
-                output_img->data[compute_index(output_img, col, row)] = newdata[row * size + col];
+                output_img->data[compute_index(output_img->width, col, row)] = newdata[row * size + col];
             }
         }
 
