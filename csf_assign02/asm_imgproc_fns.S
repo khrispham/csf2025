@@ -16,6 +16,32 @@
  */
 
 /*
+ * uint32_t get_r(uint32_t pixel);
+ *
+ * Get the upper 8 bits of the uint32_t which is the red component
+ *
+ * Parameter: %rdi - uint32_t pixel
+ *
+ * Returns: upper 8 bits of uint32_t pixel
+ */
+.globl get_r:
+
+	subq $8, %rsp //
+
+	movq %rdi, %rax // store rdi's value to rax
+	shrq $24, %rax  // shift rax's value to the right by 24 bits
+
+	addq $8, %rsp
+	ret
+
+
+
+
+
+
+
+
+/*
  * Implementations of API functions
  */
 
