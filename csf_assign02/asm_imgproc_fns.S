@@ -24,7 +24,8 @@
  *
  * Returns: the 24-31th bits of uint32_t pixel (red value)
  */
-.globl get_r:
+.globl get_r
+get_r:
 
 	subq $8, %rsp //align stack pointer
 
@@ -43,15 +44,15 @@
  * Returns: the 16-23th bits of uint32_t pixel (green value)
  */
 
-.globl get_g:
-
+.globl get_g
+get_g:
 	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $16, %rax  // shift rax's value to the right by 16 bits
-	movq $255 %rsi //store 255 to rsi (11111111)
-	shlq $16 %rsi //bitwise shift left rsi 16 times to create that mask we made in C language
-	andq %rsi %rax //perform a bitwise & with rsi and rax and store it into rax
-	shrq $16 %rax //bitwise shift right rax 16 times to get only the g value
+	movq $255, %rsi //store 255 to rsi (11111111)
+	shlq $16, %rsi //bitwise shift left rsi 16 times to create that mask we made in C language
+	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
+	shrq $16, %rax //bitwise shift right rax 16 times to get only the g value
 	addq $8, %rsp //restore stack pointer
 	ret //returns rax value
 
@@ -65,15 +66,15 @@
  * Returns: the 8-15th bits of uint32_t pixel (blue value)
  */
 
-.globl get_b:
-
+.globl get_b
+get_b:
 	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $8, %rax  // shift rax's value to the right by 8 bits
-	movq $255 %rsi //store 255 to rsi (11111111)
-	shlq $8 %rsi //bitwise shift left rsi 8 times to create that mask we made in C language
-	andq %rsi %rax //perform a bitwise & with rsi and rax and store it into rax
-	shrq $8 %rax //bitwise shift right rax 8 times to get only the b value
+	movq $255, %rsi //store 255 to rsi (11111111)
+	shlq $8, %rsi //bitwise shift left rsi 8 times to create that mask we made in C language
+	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
+	shrq $8, %rax //bitwise shift right rax 8 times to get only the b value
 	addq $8, %rsp //restore stack pointer
 	ret	//returns rax value
 
@@ -86,12 +87,14 @@
  *
  * Returns: the 0-7th bits of uint32_t pixel (alpha value)
  */
-.globl_a:
+.globl get_a
+get_a:
+
 
 	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
-	movq $255 %rsi //store 255 to rsi (11111111)
-	andq %rsi %rax //perform a bitwise & with rsi and rax and store it into rax
+	movq $255, %rsi //store 255 to rsi (11111111)
+	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
 	addq $8, %rsp //restore stack pointer
 	ret	//returns rax value
 
