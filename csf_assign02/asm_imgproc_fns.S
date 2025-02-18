@@ -99,6 +99,44 @@ get_a:
 	ret	//returns rax value
 
 
+/*
+ * uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a);
+ *
+ * construct a uint32 pixel given rgba values
+ *
+ * Parameter:
+ *  %rdi - uint32_t red
+ *  %rsi - uint32_t green
+ *  %rdx - uint32_t blue
+ *  %rcx - uint32_t alpha
+ * Registers:
+ *  %rdi - red component
+ *  %rsi - green component
+ *  %rdx - blue component
+ *  %rcx - alpha component
+ *
+ * Returns: pixel
+ */
+.globl make_pixel
+
+make_pixel:
+	subq $8, %rsp //allign the stack
+
+	//handle bits to their respective positions in the 32 bits
+	shlq $24, %rdi //shift red left 24
+	shlq $16, %rsi	//shift green left 16
+	shlq $8, %rdx	//shift blue left 8
+	movq %rcx, %rax // move alpha to output
+	//perform bitwise combination of the 4 rgba
+	orq %rdx, %rax  //bitwise or with rax blue
+	orq %rax, %rsi //bitwise or with rsi green
+	orq %rax, %rdi //bitwise or with red
+
+	addq $8, %rsp //restore stack pointer
+
+	ret
+
+
 
 /*
  * Implementations of API functions
