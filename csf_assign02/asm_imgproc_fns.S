@@ -27,11 +27,9 @@
 .globl get_r
 get_r:
 
-	subq $8, %rsp //align stack pointer
 
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $24, %rax  // shift rax's value to the right by 24 bits
-	addq $8, %rsp //restore stack pointer
 	ret //returns rax value
 
 /*
@@ -46,14 +44,12 @@ get_r:
 
 .globl get_g
 get_g:
-	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $16, %rax  // shift rax's value to the right by 16 bits
 	movq $255, %rsi //store 255 to rsi (11111111)
 	shlq $16, %rsi //bitwise shift left rsi 16 times to create that mask we made in C language
 	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
 	shrq $16, %rax //bitwise shift right rax 16 times to get only the g value
-	addq $8, %rsp //restore stack pointer
 	ret //returns rax value
 
 /*
@@ -68,14 +64,12 @@ get_g:
 
 .globl get_b
 get_b:
-	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $8, %rax  // shift rax's value to the right by 8 bits
 	movq $255, %rsi //store 255 to rsi (11111111)
 	shlq $8, %rsi //bitwise shift left rsi 8 times to create that mask we made in C language
 	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
 	shrq $8, %rax //bitwise shift right rax 8 times to get only the b value
-	addq $8, %rsp //restore stack pointer
 	ret	//returns rax value
 
 /*
@@ -91,11 +85,9 @@ get_b:
 get_a:
 
 
-	subq $8, %rsp //align stack pointer
 	movq %rdi, %rax // store rdi's value to rax
 	movq $255, %rsi //store 255 to rsi (11111111)
 	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
-	addq $8, %rsp //restore stack pointer
 	ret	//returns rax value
 
 
@@ -120,7 +112,6 @@ get_a:
 .globl make_pixel
 
 make_pixel:
-	subq $8, %rsp //allign the stack
 
 	//handle bits to their respective positions in the 32 bits
 	shlq $24, %rdi //shift red left 24
@@ -129,10 +120,9 @@ make_pixel:
 	movq %rcx, %rax // move alpha to output
 	//perform bitwise combination of the 4 rgba
 	orq %rdx, %rax  //bitwise or with rax blue
-	orq %rax, %rsi //bitwise or with rsi green
-	orq %rax, %rdi //bitwise or with red
+	orq %rsi, %rax //bitwise or with rsi green
+	orq %rdi, %rax //bitwise or with red
 
-	addq $8, %rsp //restore stack pointer
 
 	ret
 
@@ -170,10 +160,135 @@ make_pixel:
  *   %rsi - pointer to the output Image (which will have
  *          width and height twice the width/height of the
  *          input image)
+ *
+ * Register use:
+ *   %r12d - i (pixel row index)
+ *   %r13d - j (pixel column index)
+ *   %r14 - pointer to input Image
+ *   %r15 - pointer to output Image
+ *	 %r8 - array offset
+ *   %r9 - data array address
+ *   %r10 - width
+ *   %r11 - height
+ *
+ * Stack memory:
+ *   -4(%rbp)  - current pixel value
+ *   -8(%rbp)  - pixel r component value (from get_r)
+ *   -12(%rbp) - pixel g component value (from get_g)
+ *   -16(%rbp) - pixel b component value (from get_b)
+ *   -20(%rbp) - pixel a component value (from get_a)
+ *   -24(%rbp) - computed pixel index
  */
 	.globl imgproc_rgb
 imgproc_rgb:
-	/* TODO: implement */
+	// allgin stack
+	pushq %rbp
+	
+	// Allocate enough space for local variables
+	movq %rsp, %rbp
+	subq $32, %rsp
+
+	// Store callee-saved registers
+	pushq %r10	
+	pushq %r11
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	// Get width and height from input Image rdi
+	movl (%rdi), %r10d //width stored in r10d
+	movl 4(%rdi), %r11d //height stored in r11d
+
+	// Store the struct pointers to registers r14 and r15
+	movq %rdi, %r14
+	movq %rsi, %r15
+
+	// Initialize iterator i, j to 0
+	movl $0, %r12d	
+	movl $0, %r13d
+
+
+	// Iterates through loop and checks if i >= height to stop iterating through loop
+.RowLoop:
+	// Compare if i >= height, jump to RowEnd function if lower
+	cmpl %r11d, %r12d
+	jae .RowEnd		// Exit the nested loop
+
+	// Initialize iterator j=0 for the ColLoop
+	movl $0, %r13d
+.ColLoop:
+	// Compare j < width to continue
+	cmpl %r10d, %r13d
+	jae .ColEnd
+
+	// TODO: DO THE RGB TRANSFORMATION HERE
+
+	movl %r10d, %r9d // Store width to r9d which gets the data array address
+
+	imull %r12d, %r9d // Multiply width in r10 by i 
+
+	addl %r13d, %r9d // Add height to that value
+
+	// r9d has the index to the current pixel we are at in data
+
+
+	// Copy the original image pointer to %r8
+	movq %r14, %r8
+
+	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+	addq $8, %r8
+
+	// Start at the beginning of the array of data
+	movq (%r8), %r8
+
+	// Access the array values and move it to register %edi (32-bit rdi) (so we can do our calls for get_r etc)
+	movl (%r8, %r9, 4), %edi
+
+	// Extract RGBA components
+	call get_r
+	movl %eax, -8(%rbp)   // Save red component from rax to rbp 
+	call get_g
+	movl %eax, -12(%rbp)  // Save green component from rax to rbp 
+	call get_b
+	movl %eax, -16(%rbp)  // Save blue component from rax to rbp 
+	call get_a
+	movl %eax, -20(%rbp)  // Save alpha component from rax to rbp 
+
+	//TODO DO THE ACTUAL RGB HEREEE ISSUE HEREEEe
+	movl (%r8, %r9, 4), %eax           // Load the original pixel
+	movq 8(%r15), %r8  // Load the output image's data pointer into %r8
+	subl %r13d, %r9d //subtract height
+	shll $1, %r9d //multiply by 2
+	addl %r13d, %r9d //add height to get dimensions on the outputimage
+
+	movl %eax, (%r8, %r9, 4)  
+
+
+
+
+
+	// Increment j counter by 1
+	incl %r13d
+	jmp  .ColLoop // Continue the j loop
+
+.ColEnd:
+	// Increment i counter by 1
+	incl %r12d
+	jmp  .RowLoop // Go back to the Row loop with i incremented by 1
+
+.RowEnd:
+	// Restore callee-saved registers
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+
+	addq $32, %rsp
+	popq %rbp
+
 	ret
 
 /*
