@@ -27,9 +27,9 @@
 .globl get_r
 get_r:
 
-
 	movq %rdi, %rax // store rdi's value to rax
 	shrq $24, %rax  // shift rax's value to the right by 24 bits
+
 	ret //returns rax value
 
 /*
@@ -44,12 +44,10 @@ get_r:
 
 .globl get_g
 get_g:
-	movq %rdi, %rax // store rdi's value to rax
-	shrq $16, %rax  // shift rax's value to the right by 16 bits
-	movq $255, %rsi //store 255 to rsi (11111111)
-	shlq $16, %rsi //bitwise shift left rsi 16 times to create that mask we made in C language
-	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
-	shrq $16, %rax //bitwise shift right rax 16 times to get only the g value
+	movq %rdi, %rax   // Copy the pixel value to %rax
+    shrq $16, %rax    // Shift right by 16 bits 
+    andq $255, %rax  // Apply a mask (0xFF) to isolate the green component
+
 	ret //returns rax value
 
 /*
@@ -63,14 +61,12 @@ get_g:
  */
 
 .globl get_b
-get_b:
-	movq %rdi, %rax // store rdi's value to rax
-	shrq $8, %rax  // shift rax's value to the right by 8 bits
-	movq $255, %rsi //store 255 to rsi (11111111)
-	shlq $8, %rsi //bitwise shift left rsi 8 times to create that mask we made in C language
-	andq %rsi, %rax //perform a bitwise & with rsi and rax and store it into rax
-	shrq $8, %rax //bitwise shift right rax 8 times to get only the b value
-	ret	//returns rax value
+get_b:	
+
+    movq %rdi, %rax    // Store rdi's value to rax
+    shrq $8, %rax      // Shift rax right by 8 bits
+    andq $255, %rax    // Mask the lower 8 bits (0xFF)
+    ret                // Return the result in rax
 
 /*
  * uint32_t get_a(uint32_t pixel);
@@ -122,7 +118,6 @@ make_pixel:
 	orq %rdx, %rax  //bitwise or with rax blue
 	orq %rsi, %rax //bitwise or with rsi green
 	orq %rdi, %rax //bitwise or with red
-
 
 	ret
 
@@ -228,7 +223,7 @@ imgproc_rgb:
 
 	imull %r12d, %r9d // Multiply width in r10 by i 
 
-	addl %r13d, %r9d // Add height to that value
+	addl %r13d, %r9d // Add j (col) to that value
 
 	// r9d has the index to the current pixel we are at in data
 
@@ -255,14 +250,132 @@ imgproc_rgb:
 	call get_a
 	movl %eax, -20(%rbp)  // Save alpha component from rax to rbp 
 
+
 	//TODO DO THE ACTUAL RGB HEREEE ISSUE HEREEEe
+
+	//Just Quadrant A don't have to use any rgb yet
 	movl (%r8, %r9, 4), %eax           // Load the original pixel
 	movq 8(%r15), %r8  // Load the output image's data pointer into %r8
 	subl %r13d, %r9d //subtract height
 	shll $1, %r9d //multiply by 2
 	addl %r13d, %r9d //add height to get dimensions on the outputimage
+	movl %eax, (%r8, %r9, 4)  //put the pixel on the output image
 
-	movl %eax, (%r8, %r9, 4)  
+
+	//Quadrant B  (RED)
+	//allocate more variables cause i ran outa registers
+	pushq %rdi
+	pushq %rsi
+	pushq %rdx
+	pushq %rcx
+	pushq %r9
+
+	movq -8(%rbp), %rdi
+	movq $0, %rsi
+	movq $0, %rdx
+	movq -20(%rbp), %rcx
+	
+	call make_pixel
+	
+	// Correctly calculate 2 * width * row
+	movl %r12d, %r9d     // Load row index (i) into %ebx
+	shll $1, %r9d        // Multiply row index by 2 (since output image is twice the size)
+	imull %r10d, %r9d    // Multiply by the width of the input image (2 * width * row)
+	//Correctly calculate 2 * width * row + col + width
+	addl %r13d, %r9d     // Add column index (j) to get the column offset
+	addl %r10d, %r9d     // Add width to get the correct quadrant (2 * width * row + col + width)
+
+	// Store the pixel in the output image
+	movq 8(%r15), %r8    // Load the output image's data pointer into %r8
+	movl %eax, (%r8, %r9, 4)  // Store the pixel at the calculated position
+
+	//restore callee variables
+	popq %r9
+	popq %rcx
+	popq %rdx
+	popq %rsi
+	popq %rdi
+
+
+
+	//Quadrant C  (GREEN)
+	//allocate more variables cause i ran outa registers
+	pushq %rdi
+	pushq %rsi
+	pushq %rdx
+	pushq %rcx
+	pushq %r9
+
+	movq $0, %rdi
+	movq -12(%rbp), %rsi
+	movq $0, %rdx
+	movq -20(%rbp), %rcx
+	
+	call make_pixel
+	
+	// Correctly calculate 2 * width * row
+	movl %r12d, %r9d     // Load row index (i) into %ebx
+	addl %r11d, %r9d	//add height to row
+	shll $1, %r9d        // Multiply row + height index by 2 by shifting left bitwise
+	imull %r10d, %r9d    // Multiply by the width of the input image (2 * width * row)
+	//Correctly calculate 2 * width * row + col + width
+	addl %r13d, %r9d     // Add column index (j) to get the column offset
+
+	// Store the pixel in the output image
+	movq 8(%r15), %r8    // Load the output image's data pointer into %r8
+	movl %eax, (%r8, %r9, 4)  // Store the pixel at the calculated position
+
+	//restore callee variables
+	popq %r9
+	popq %rcx
+	popq %rdx
+	popq %rsi
+	popq %rdi
+
+
+
+
+//Quadrant D (Blue)
+	//allocate more variables cause i ran outa registers
+	pushq %rdi
+	pushq %rsi
+	pushq %rdx
+	pushq %rcx
+	pushq %r9
+
+	movq $0, %rdi
+	movq $0, %rsi
+	movq -16(%rbp), %rdx
+	movq -20(%rbp), %rcx
+	
+	call make_pixel
+	
+	// Correctly calculate 2 * width * (row + height)
+	movl %r12d, %r9d     // Load row index (i) into %ebx
+	addl %r11d, %r9d	//add height to row
+	shll $1, %r9d        // Multiply row + height index by 2 by shifting left bitwise
+	imull %r10d, %r9d    // Multiply by the width of the input image (2 * width * row)
+	//Correctly calculate 2 * width * row + col + width
+	addl %r13d, %r9d     // Add column index (j) to get the column offset
+	addl %r10d, %r9d     // Add width value to get the value
+
+	// Store the pixel in the output image
+	movq 8(%r15), %r8    // Load the output image's data pointer into %r8
+	movl %eax, (%r8, %r9, 4)  // Store the pixel at the calculated position
+
+	//restore callee variables
+	popq %r9
+	popq %rcx
+	popq %rdx
+	popq %rsi
+	popq %rdi
+
+
+
+
+
+
+
 
 
 
