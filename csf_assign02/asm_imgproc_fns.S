@@ -196,8 +196,8 @@ imgproc_rgb:
 	movl 4(%rdi), %r11d //height stored in r11d
 
 	// Store the struct pointers to registers r14 and r15
-	movq %rdi, %r14
-	movq %rsi, %r15
+	movq %rdi, %r14	//store original image to r14
+	movq %rsi, %r15	//store output image to r15
 
 	// Initialize iterator i, j to 0
 	movl $0, %r12d	
@@ -215,33 +215,27 @@ imgproc_rgb:
 .ColLoop:
 	// Compare j < width to continue
 	cmpl %r10d, %r13d
-	jae .ColEnd
+	jae .ColEnd	//jumps to ColEnd function if width <= j
 
-	// TODO: DO THE RGB TRANSFORMATION HERE
+
 
 	movl %r10d, %r9d // Store width to r9d which gets the data array address
-
 	imull %r12d, %r9d // Multiply width in r10 by i 
-
 	addl %r13d, %r9d // Add j (col) to that value
+
 
 	// r9d has the index to the current pixel we are at in data
 
 
-	// Copy the original image pointer to %r8
-	movq %r14, %r8
+	//get the pixel
+	movq %r14, %r8 	// Copy the original image pointer to %r8
+	addq $8, %r8 	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+	movq (%r8), %r8	// Start at the beginning of the array of data
+	movl (%r8, %r9, 4), %edi// Access the array values and move it to register %edi (32-bit rdi) (so we can do our calls for get_r etc)
 
-	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
-	addq $8, %r8
 
-	// Start at the beginning of the array of data
-	movq (%r8), %r8
-
-	// Access the array values and move it to register %edi (32-bit rdi) (so we can do our calls for get_r etc)
-	movl (%r8, %r9, 4), %edi
-
-	// Extract RGBA components
-	call get_r
+	// Get rgba components
+	call get_r	
 	movl %eax, -8(%rbp)   // Save red component from rax to rbp 
 	call get_g
 	movl %eax, -12(%rbp)  // Save green component from rax to rbp 
@@ -251,7 +245,6 @@ imgproc_rgb:
 	movl %eax, -20(%rbp)  // Save alpha component from rax to rbp 
 
 
-	//TODO DO THE ACTUAL RGB HEREEE ISSUE HEREEEe
 
 	//Just Quadrant A don't have to use any rgb yet
 	movl (%r8, %r9, 4), %eax           // Load the original pixel
@@ -270,10 +263,11 @@ imgproc_rgb:
 	pushq %rcx
 	pushq %r9
 
-	movq -8(%rbp), %rdi
-	movq $0, %rsi
-	movq $0, %rdx
-	movq -20(%rbp), %rcx
+	//move rgb values to their registers before calling make_pixel
+	movq -8(%rbp), %rdi //moves red pixel to rdi
+	movq $0, %rsi	//moves 0 to green rsi
+	movq $0, %rdx	//moves 0 to blue rdx
+	movq -20(%rbp), %rcx 	//moves alpha value to rcx
 	
 	call make_pixel
 	
@@ -306,10 +300,11 @@ imgproc_rgb:
 	pushq %rcx
 	pushq %r9
 
-	movq $0, %rdi
-	movq -12(%rbp), %rsi
-	movq $0, %rdx
-	movq -20(%rbp), %rcx
+	//move rgb values to their registers before calling make_pixel
+	movq $0, %rdi	//moves 0 to red register
+	movq -12(%rbp), %rsi //moves the g_value to rsi
+	movq $0, %rdx	//moves 0 to blue register
+	movq -20(%rbp), %rcx //moves the alpha_value to rcx
 	
 	call make_pixel
 	
@@ -343,10 +338,10 @@ imgproc_rgb:
 	pushq %rcx
 	pushq %r9
 
-	movq $0, %rdi
-	movq $0, %rsi
-	movq -16(%rbp), %rdx
-	movq -20(%rbp), %rcx
+	movq $0, %rdi	//move 0 to the red register
+	movq $0, %rsi	//move 0 to the green register
+	movq -16(%rbp), %rdx	//move the b_val to the blue register rdx
+	movq -20(%rbp), %rcx	//move the alpha value to the rcx register
 	
 	call make_pixel
 	
@@ -371,16 +366,6 @@ imgproc_rgb:
 	popq %rdi
 
 
-
-
-
-
-
-
-
-
-
-
 	// Increment j counter by 1
 	incl %r13d
 	jmp  .ColLoop // Continue the j loop
@@ -399,8 +384,9 @@ imgproc_rgb:
 	popq %r11
 	popq %r10
 
-	addq $32, %rsp
-	popq %rbp
+	
+	addq $32, %rsp //deallocate the memory used from the stack
+	popq %rbp	//restory rbp register to original value
 
 	ret
 
