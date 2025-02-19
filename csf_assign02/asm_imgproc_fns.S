@@ -121,7 +121,66 @@ make_pixel:
 
 	ret
 
+/*
+ * uint32_t to_grayscale( uint32_t pixel );
+ *
+ * construct a uint32 pixel that has the grayscale color value of the original pixel
+ *
+ * Parameter: %rdi - uint32_t pixel
+ *
+ * Registers:
+ * %r12 - red value of pixel
+ * %r13 - green value of pixel
+ * %r14 - blue value of pixel
+ * %r15 - alpha value of pixel
+ *
+ * Returns: a new uint32 pixel in grayscale value
+ */
+.globl to_grayscale
 
+to_grayscale:
+	call get_r 			// get r value of pixel
+	movl %eax, %r12d 	// save red value from rax to r12
+	call get_g 			// get g value of pixel
+	movl %eax, %r13d 	// save red value from rax to r13
+	call get_b 			// get b value of pixel
+	movl %eax, %r14d 	// save red value from rax to r14
+	call get_a 			// get r value of pixel
+	movl %eax, %r15d 	// save red value from rax to r15
+
+	imul $79, %r12d, %r12d		// multiply red for grayscale computation
+	imul $128, %r13d, %r13d	// multiply green for grayscale computation
+	imul $49, %r14d, %r14d		// multiply green for grayscale computation
+ 
+	addl %r13d, %r12d	// red = red + green
+	addl %r14d, %r12d 	// red = red + blue
+	shrl $8, %r12d		// shift right by 8 to divide r+g+b in r12 by 256
+	
+	movl %r12d, %edi 	// 1st parameter for upcoming make_pixel
+	movl %r12d, %esi 	// 2nd parameter for upcoming make_pixel
+	movl %r12d, %edx 	// 3rd parameter for upcoming make_pixel
+	movl %r15d, %ecx 	// 4th parameter for upcoming make_pixel
+	call make_pixel 	// make grayscale pixel from computed values
+
+	ret	
+
+/*
+ */
+.globl gradient
+gradient:
+	ret
+
+/*
+ */
+.globl to_fade
+to_fade:
+	ret
+
+/*
+ */
+.globl compute_index
+compute_index:
+	ret
 
 /*
  * Implementations of API functions
