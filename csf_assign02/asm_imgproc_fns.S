@@ -165,21 +165,108 @@ to_grayscale:
 	ret	
 
 /*
+ * int64_t gradient( int64_t x, int64_t max );
+ *
+ * compute the axis-specific int64 value that determines how faded the pixel should be
+ *
+ * Parameters:
+ * %rdi - int64_t x
+ * %rsi - int64_t max
+ *
+ * Registers:
+ * %r12 - stores $1000000 that temp^2 will be subtracted from
+ *
+ * Returns: gradient value between 0 and 1000000
  */
 .globl gradient
 gradient:
+	imul $2000000000, %rdi	//2000000000*x
+	imul $1000000, %rsi		//1000000*max
+
+	movq $0, %rdx			//make sure upper 64 bits of rdx is 0
+	movq %rdi, %rax			//move dividend to rax
+	divq %rsi				//rax = rax/rdi = (2000000000*x)/(1000000*max)
+	subq $1000, %rax		//rax = rax - 1000 = temp
+
+	imul %rax, %rax			//rax = rax^2 = temp^2
+	movq $1000000, %r12		//save temp^2 to r12 for subtraction
+	subq %rax, %r12			//r12 = r12 - rax = 1000000 - temp^2
+	movq %r12, %rax			//save result to rax to be returned
+
 	ret
 
 /*
+ * uint32_t to_fade( int64_t gradrow, int64_t gradcol, uint32_t pixel);
+ *
+ * construct a faded uint32 pixel relative to its index
+ *
+ * Parameters:
+ * %rdi - int64_t gradrow
+ * %rsi - int64_t gradcol
+ * %rdx - uint32_t pixel
+ *
+ * Registers:
+ * %rcx - temporary save for 1000000000000 divisor
+ * %rbx - temporary save for pixel
+ * %r12 - faded red value
+ * %r13 - faded green value
+ * %r14 - faded blue value
+ * %r15 - unchanged alpha value
+ *
+ * Returns: a new uint32 faded pixel
  */
 .globl to_fade
 to_fade:
+	imul %rdi, %rsi 			//store gradcol * gradrow to rsi
+	movq %rdx, %rdi				//pass pixel to rdi for get_x calls
+	movq $1000000000000, %rcx 	//save 1000000000000 to rcx for future division
+
+	call get_r			
+	imul %rsi, %rax		//rax = rax * rsi = red value * gradcol * gradrow
+	movq $0, %rdx		//set rdx to 0 to prepare for division
+	divq %rcx			//rax = rax/rcx = rax/1000000000000
+	movq %rax, %r12		//save faded red value to r12
+			
+	call get_g
+	imul %rsi, %rax		//rax = rax * rsi = green value * gradcol * gradrow
+	movq $0, %rdx		//set rdx to 0 to prepare for division
+	divq %rcx			//rax = rax/rcx = rax/1000000000000
+	movq %rax, %r13		//save faded green value to r13
+
+	call get_b
+	imul %rsi, %rax		//rax = rax * rsi = blue value * gradcol * gradrow
+	movq $0, %rdx		//set rdx to 0 to prepare for division
+	divq %rcx			//rax = rax/rcx = rax/1000000000000
+	movq %rax, %r14		//save faded blue value to r14
+
+	call get_a
+	movq %rax, %r15		//save alpha value to r15
+
+	movq %r12, %rdi		//set faded red value to 1st parameter
+	movq %r13, %rsi		//set faded green value to 2nd parameter
+	movq %r14, %rdx		//set faded blue value to 3rd parameter
+	movq %r15, %rcx		//set alpha value to 4th parameter
+	call make_pixel		//make the pixel from those 4 parameters
+
 	ret
 
 /*
+ * int32_t compute_index( int32_t width, int32_t col, int32_t row );
+ *
+ * compute the 1d index value from specified col and row indices
+ *
+ * Parameters:
+ * %rdi - int32_t width
+ * %rsi - int32_t col
+ * %rdx - int32_t row
+ *
+ * Returns: int32 index value
  */
 .globl compute_index
 compute_index:
+	imul %rdx, %rdi		//multiply width and row
+	addq %rsi, %rdi		//add col to product
+	movq %rdi, %rax		//save final result to rax to be returned
 	ret
 
 /*
