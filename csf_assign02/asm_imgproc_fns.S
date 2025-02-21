@@ -256,17 +256,17 @@ to_fade:
  * compute the 1d index value from specified col and row indices
  *
  * Parameters:
- * %rdi - int32_t width
- * %rsi - int32_t col
- * %rdx - int32_t row
+ * %edi - int32_t width
+ * %esi - int32_t col
+ * %edx - int32_t row
  *
  * Returns: int32 index value
  */
 .globl compute_index
 compute_index:
-	imul %rdx, %rdi		//multiply width and row
-	addq %rsi, %rdi		//add col to product
-	movq %rdi, %rax		//save final result to rax to be returned
+	imul %edx, %edi		//multiply width and row
+	addl %esi, %edi		//add col to product
+	movl %edi, %eax		//save final result to rax to be returned
 	ret
 
 /*
@@ -322,7 +322,7 @@ compute_index:
  */
 	.globl imgproc_rgb
 imgproc_rgb:
-	// allgin stack
+	// align stack
 	pushq %rbp
 	
 	// Allocate enough space for local variables
@@ -545,10 +545,125 @@ imgproc_rgb:
  * Parameters:
  *   %rdi - pointer to original struct Image
  *   %rsi - pointer to output struct Image
+ *
+ * Register use:
+ *   %r12d - i (pixel row index)
+ *   %r13d - j (pixel column index)
+ *   %r14 - pointer to input Image
+ *   %r15 - pointer to output Image
+ *	 %r8 - array offset
+ *   %r9 - data array address
+ *   %r10 - width
+ *   %r11 - height
+ * 
+ * Stack memory:
+ * 
+ *
  */
 	.globl imgproc_grayscale
 imgproc_grayscale:
-	/* TODO: implement */
+	//align stack
+	pushq %rbp
+
+	//Allocate enough space for local variables
+	movq %rsp, %rbp
+	subq $8, %rsp
+
+	// Get width and height from input Image rdi
+	movl (%rdi), %r10d //width stored in r10d
+	movl 4(%rdi), %r11d //height stored in r11d
+
+
+	// Store the struct pointers to registers r14 and r15
+	movq %rdi, %r14	//store original image to r14
+	movq %rsi, %r15	//store output image to r15
+
+	// Initialize iterator i, j to 0
+	movl $0, %r12d	
+	movl $0, %r13d
+
+	// Iterates through loop and checks if i >= height to stop iterating through loop
+.RowLoopGrayscale:
+	// Compare if i >= height, jump to RowEnd function if lower
+	cmpl %r11d, %r12d
+	jae .RowEndGrayscale		// Exit the nested loop
+
+	// Initialize iterator j=0 for the ColLoop
+	movl $0, %r13d
+.ColLoopGrayscale:
+	// Compare j < width to continue
+	cmpl %r10d, %r13d
+	jae .ColEndGrayscale	//jumps to ColEnd function if width <= j
+
+
+	//store width and height in stack
+	pushq %r10
+	pushq %r11
+
+	//get the 1d index
+	movl %r10d, %edi 	//width is 1st parameter
+	movl %r13d, %esi	//j as col is 2nd parameter
+	movl %r12d, %edx	//i as row in 3rd parameter
+	call compute_index
+	movl %eax, %r9d		//move 1d index result to r9d
+
+	//return width and height to registers
+	popq %r11
+	popq %r10
+
+	// r9d has the index to the current pixel we are at in data
+
+
+	//get the pixel
+	movq 8(%r14), %r8   		// Load the data pointer from offset 8 of the input image struct
+	movl (%r8, %r9, 4), %edi 	// Access the array values and move it to register %edi (32-bit rdi) (so we can do our calls for get_r etc)
+	
+
+	//store everything in stack since to_grayscale accesses those registers
+	//not directly accessed by to_grayscale but are caller-saved 
+	pushq %r9			//current index
+	pushq %r10			//width
+	pushq %r11			//height
+	//directly accessed by to_grayscale
+	pushq %r12			//i
+	pushq %r13			//j
+	pushq %r14			//input_img
+	pushq %r15			//output_img
+
+	call to_grayscale			//Get grayscale value 
+	
+
+	//return everything to their respective register
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+	popq %r9
+	
+
+	movq 8(%r15), %r8			//Load the output image's data pointer into r8
+	movl %eax, (%r8, %r9, 4) 	//Put the grayscale value into output image's data address
+	
+
+	
+	// Increment j counter by 1
+	incl %r13d
+	jmp  .ColLoopGrayscale // Continue the j loop
+
+.ColEndGrayscale:
+	// Increment i counter by 1
+	incl %r12d
+	jmp  .RowLoopGrayscale // Go back to the Row loop with i incremented by 1
+
+.RowEndGrayscale:
+	// Restore callee-saved registers
+
+	addq $8, %rsp //deallocate the memory used from the stack
+	popq %rbp	//restory rbp register to original value
+
+
 	ret
 
 /*
