@@ -134,8 +134,7 @@ int main( int argc, char **argv ) {
   // for any additional test functions you add.
   TEST( test_rgb_basic );
   TEST( test_grayscale_basic );
-  //Milestone 3
-  //TEST( test_fade_basic );
+  TEST( test_fade_basic );
   //TEST( test_kaleidoscope_basic );
   TEST( test_get_r );
   TEST( test_get_g );

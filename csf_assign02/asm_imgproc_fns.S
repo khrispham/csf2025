@@ -180,6 +180,10 @@ to_grayscale:
  */
 .globl gradient
 gradient:
+	pushq %rbp
+	subq $8, %rsp
+	pushq %r12
+
 	imul $2000000000, %rdi	//2000000000*x
 	imul $1000000, %rsi		//1000000*max
 
@@ -192,6 +196,10 @@ gradient:
 	movq $1000000, %r12		//save temp^2 to r12 for subtraction
 	subq %rax, %r12			//r12 = r12 - rax = 1000000 - temp^2
 	movq %r12, %rax			//save result to rax to be returned
+
+	popq %r12
+	addq $8, %rsp
+	popq %rbp
 
 	ret
 
@@ -217,6 +225,15 @@ gradient:
  */
 .globl to_fade
 to_fade:
+	pushq %rbp
+	subq $8, %rsp
+	pushq %rcx
+	pushq %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
 	imul %rdi, %rsi 			//store gradcol * gradrow to rsi
 	movq %rdx, %rdi				//pass pixel to rdi for get_x calls
 	movq $1000000000000, %rcx 	//save 1000000000000 to rcx for future division
@@ -247,6 +264,15 @@ to_fade:
 	movq %r14, %rdx		//set faded blue value to 3rd parameter
 	movq %r15, %rcx		//set alpha value to 4th parameter
 	call make_pixel		//make the pixel from those 4 parameters
+
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	popq %rcx
+	addq $8, %rsp
+	popq %rbp
 
 	ret
 
@@ -680,7 +706,126 @@ imgproc_grayscale:
  */
 	.globl imgproc_fade
 imgproc_fade:
-	/* TODO: implement */
+	//align stack
+	pushq %rbp
+
+	//Allocate enough space for local variables
+	movq %rsp, %rbp
+	subq $8, %rsp
+
+	// Get width and height from input Image rdi
+	movl (%rdi), %r10d //width stored in r10d
+	movl 4(%rdi), %r11d //height stored in r11d
+
+
+	// Store the struct pointers to registers r14 and r15
+	movq %rdi, %r14	//store original image to r14
+	movq %rsi, %r15	//store output image to r15
+
+	// Initialize iterator i, j to 0
+	movl $0, %r12d	
+	movl $0, %r13d
+
+	// Iterates through loop and checks if i >= height to stop iterating through loop
+.RowLoopFade:
+	// Compare if i >= height, jump to RowEnd function if lower
+	cmpl %r11d, %r12d
+	jae .RowEndFade		// Exit the nested loop
+
+	// Initialize iterator j=0 for the ColLoop
+	movl $0, %r13d
+.ColLoopFade:
+	// Compare j < width to continue
+	cmpl %r10d, %r13d
+	jae .ColEndFade	//jumps to ColEnd function if width <= j
+
+
+	//store width and height in stack
+	pushq %r10
+	pushq %r11
+
+	//get the 1d index
+	movl %r10d, %edi 	//width is 1st parameter
+	movl %r13d, %esi	//j as col is 2nd parameter
+	movl %r12d, %edx	//i as row in 3rd parameter
+	call compute_index
+	movl %eax, %r9d		//move 1d index result to r9d
+
+	//return width and height to registers
+	popq %r11
+	popq %r10
+
+	// r9d has the index to the current pixel we are at in data
+
+	//get the pixel
+	pushq %rbx
+	movq 8(%r14), %r8   		// Load the data pointer from offset 8 of the input image struct
+	movl (%r8, %r9, 4), %ebx 	// move pixel value to ebx
+
+	//PROBLEM W EDX FROM T0_FADE
+
+	//store everything in stack since gradient and fade accesses those registers
+	pushq %r9			//current index
+	pushq %r14			//input_img
+	pushq %r15			//output_img
+
+	//get gradrow and gradcol
+	movq %r12, %rdi		//i 1st parameter
+	movq %r11, %rsi		//height 2nd parameter
+	pushq %r12			//save i 
+	pushq %r11			//save height
+	call gradient
+	popq %r11			//restore height
+	popq %r12			//restore i
+	pushq %rax			//push gradrow to stack
+
+	movq %r13, %rdi		//j 1st parameter
+	movq %r10, %rsi		//width 2nd parameter
+	pushq %r13			//save j
+	pushq %r10			//save width
+	call gradient
+	popq %r10			//restore width
+	popq %r13			//restore j
+	pushq %rax			//push gradcol to stack
+	
+
+	//POTENTIAL PROBLEM: CHECK TO FADE'S RCX AND RBX
+	//						GRADIENT AND TO FADE BOTH USES R12
+
+	popq %rsi			//pop gradcol from stack to 2nd parameter rsi
+	popq %rdi			//pop gradrow from stack to 1st parameter rdi
+	movq %rbx, %rdx		//move pixel from rbx to rdx
+	call to_fade			//Get faded value 
+	
+
+	//return everything to their respective register
+	popq %r15
+	popq %r14
+	popq %r9
+	
+	popq %rbx
+
+	movq 8(%r15), %r8			//Load the output image's data pointer into r8
+	movl %eax, (%r8, %r9, 4) 	//Put the faded value into output image's data address
+	
+
+	
+	// Increment j counter by 1
+	incl %r13d
+	jmp  .ColLoopFade // Continue the j loop
+
+.ColEndFade:
+	// Increment i counter by 1
+	incl %r12d
+	jmp  .RowLoopFade // Go back to the Row loop with i incremented by 1
+
+.RowEndFade:
+	// Restore callee-saved registers
+
+	addq $8, %rsp //deallocate the memory used from the stack
+	popq %rbp	//restory rbp register to original value
+
+
 	ret
 
 /*

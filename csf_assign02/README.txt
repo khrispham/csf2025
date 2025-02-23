@@ -7,4 +7,7 @@ John wrote imgproc_rgb and imgproc_kaleidoscope.
 
 Milestone 2
 Khris wrote helper functions for to_grayscale, tests, and did imgproc_grayscale 
-John wrote helper functions for get_rgb and makepixel and did imgproc_rgb 
+John wrote helper functions for get_rgb and makepixel and did imgproc_rgb
+
+Milestone 3
+
