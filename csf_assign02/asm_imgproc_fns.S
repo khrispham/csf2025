@@ -882,7 +882,7 @@ imgproc_fade:
  *   %r12d - i (pixel row index)
  *   %r13d - j (pixel column index)
  *   %r14 - pointer to input Image
- *   %r15 - pointer to output Image
+ *   %r15 - true width
  *	 %r8 - array offset
  *   %r9 - data array address
  *   %r10 - width
@@ -900,7 +900,7 @@ imgproc_fade:
 
 
 
-	.globl imgproc_kaleidoscope
+.globl imgproc_kaleidoscope
 imgproc_kaleidoscope:
 	// align stack
 	pushq %rbp
@@ -916,8 +916,8 @@ imgproc_kaleidoscope:
 	pushq %r15
 
 	// Get width and height from input Image rdi
-	movl (%rsi), %r10d // width stored in r10d
-	movl 4(%rsi), %r11d // height stored in r11d
+	movl (%rdi), %r10d // width stored in r10d
+	movl 4(%rdi), %r11d // height stored in r11d
 	//compare the width and height and see if they are equal
 	cmpl %r10d, %r11d
 	jne .TrashDimensions //if not equal, jump to trashdimensions that returns 0
@@ -930,6 +930,10 @@ imgproc_kaleidoscope:
 
 	movl $0, %r12d // set i = 0 to start the forloop
 
+	movl %r10d, %r9d //move width to r9
+	andl $1, %r9d //check if r9d is odd
+	cmpl $1, %r9d
+	je .odd //if odd, jump to odd
 
 .RowLoopK:
 	cmpl %r15d, %r12d //if i < height/2
@@ -1057,9 +1061,286 @@ imgproc_kaleidoscope:
 	movl $1, %eax	//put 1 into rax and return it
 	ret 
 
+
+.odd:
+	incl %r15d	//add 1 to r15
+	incl %r11d	//add 1 to height
+
+	.RowLoopKodd:
+		cmpl %r15d, %r12d //if i < height/2
+		jae .RowEndK // Exit the loop if i >= height/2
+
+		movl %r12d, %r13d // j = i
+
+	.ColLoopKodd:
+		cmpl %r15d, %r13d // if j < width/2
+		jae .ColEndKodd // Exit the loop if j >= width/2
+
+
+		cmpl %r11d, %r12d //see if i >= original size
+		jge .ColEndKodd
+
+		cmpl %r11d, %r13d //see if j >= original size
+		jge .ColEndKodd
+
+
+
+
+		//allocate stack to get more variables
+		pushq %rdi
+		pushq %rsi
+		movl %r11d, %edi //move the acutalwidth to rdi
+		decl %edi //decrease edi by 1
+		subl %r12d, %edi //subtract i from size
+
+		cmpl %r10d, %edi //see if mirrored row >= original size
+		popq %rsi
+		popq %rdi
+		jge .CheckStartI
+
+		//allocate stack to get more variables
+		pushq %rdi
+		pushq %rsi
+		movl %r11d, %edi //move the actualwidth to rdi
+		decl %edi //decrease edi by 1
+		subl %r13d, %edi //subtract j from size
+
+		cmpl %r10d, %edi //see if mirrored col >= original size
+		popq %rsi
+		popq %rdi
+		jge .CheckStartJ
+
+		
+
+		// Calculate the index in the input image
+		movl %r10d, %r9d // Store width to r9d which gets the data array address
+		imull %r12d, %r9d // // Multiply width in r10 by i 
+		addl %r13d, %r9d // Add j (col) to that value
+
+
+		// r9d has the index to the current pixel we are at in data
+
+
+
+		// Get the pixel
+		movq %rdi, %r8 	// Copy the original image pointer to %r8
+		addq $8, %r8 	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+		movq (%r8), %r8	// Start at the beginning of the array of data
+
+
+		//Top left
+		//section A
+		movl (%r8, %r9, 4), %eax // Access the array values and move it to register %eax (32-bit rax) 
+		movq %rsi, %r8 	// Copy the output image pointer to %r8
+		addq $8, %r8 	// Get to the data pointer array by adding 8
+		movq (%r8), %r8	// Set the pointer to the beginning of the array
+		movl %eax, (%r8, %r9, 4) //put the pixel on the output image
+
+		//section B
+		// Calculate the index for wedge B (flip i and j)
+		movl %r10d, %r9d // Store width to r9d
+		imull %r13d, %r9d // Multiply width by j 
+		addl %r12d, %r9d // Add i  to get the index
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image (wedge B)	
+
+
+
+		
+
+		//r12 = i 
+		//r13 = j
+		//Mirror A across y axis
+		movl %r10d, %r9d // Store width to r9d
+		imull %r12d, %r9d // Multiply width by i
+		addl %r11d, %r9d// add by truesize
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+
+		//Mirror B across y axis
+		movl %r10d, %r9d // Store width to r9d
+		imull %r13d, %r9d // Multiply width by j
+		addl %r11d, %r9d// add by truesize
+		decl %r9d //decrease  by 1
+		subl %r12d, %r9d //subtract i from this
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+		
+
+		//Mirror A across x axis Call this C
+		movl %r11d, %r9d // Store truesize to r9d
+		decl %r9d //decrease  by 1
+		subl %r12d, %r9d //subtract i from this
+		imull %r10d, %r9d // Multiply by width
+		addl %r13d, %r9d// add by j
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+
+		//Mirror B across x axis Call this D
+		movl %r11d, %r9d // Store truesize to r9d
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		imull %r10d, %r9d // Multiply by width
+		addl %r12d, %r9d// add by i
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+
+		//Mirror C across y axis
+		//newdata[(size - row - 1)  * size  + size - col - 1] = pixel;
+		movl %r11d, %r9d // Store truesize to r9d
+		decl %r9d //decrease  by 1
+		subl %r12d, %r9d //subtract i from this
+		imull %r10d, %r9d // Multiply by width
+		addl %r11d, %r9d// add by truesize
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+
+
+		//Mirror C across y axis
+		//newdata[(size - row - 1)  * size  + size - col - 1] = pixel;
+		movl %r11d, %r9d // Store truesize to r9d
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		imull %r10d, %r9d // Multiply by width
+		addl %r11d, %r9d// add by truesize
+		decl %r9d //decrease  by 1
+		subl %r12d, %r9d //subtract i from this
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+
+
+
+
+		// Increment j
+		incl %r13d
+		jmp .ColLoopKodd
+
+	.CheckStartI:
+		cmpl $0, %r12d //sees if i = 0.
+		je .OperationsI
+
+		incl %r13d
+		jmp .ColLoopKodd
+
+	.CheckStartJ:
+		cmpl $0, %r13d //sees if j = 0.
+		je .OperationsJ
+
+		incl %r13d
+		jmp .ColLoopKodd
+
+
+	.OperationsI:
+
+		cmpl %r15d, %r13d // if j < width/2
+		jae .ColEndK // Exit the loop if j >= width/2
+
+
+		// Calculate the index in the input image
+		movl %r10d, %r9d // Store width to r9d which gets the data array address
+		imull %r12d, %r9d // // Multiply width in r10 by i 
+		addl %r13d, %r9d // Add j (col) to that value
+
+		// r9d has the index to the current pixel we are at in data
+
+		// Get the pixel
+		movq %rdi, %r8 	// Copy the original image pointer to %r8
+		addq $8, %r8 	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+		movq (%r8), %r8	// Start at the beginning of the array of data
+
+		movl (%r8, %r9, 4), %eax // Access the array values and move it to register %eax (32-bit rax) 
+
+
+		//quad 1
+		movq %rsi, %r8 	// Copy the output image pointer to %r8
+		addq $8, %r8 	// Get to the data pointer array by adding 8
+		movq (%r8), %r8	// Set the pointer to the beginning of the array
+		movl %eax, (%r8, %r9, 4) //put the pixel on the output image
+		//section B
+		// Calculate the index for wedge B (flip i and j)
+		movl %r10d, %r9d // Store width to r9d
+		imull %r13d, %r9d // Multiply width by j 
+		addl %r12d, %r9d // Add i  to get the index
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image (wedge B)	
+
+		//mirror across y axis
+		movl %r10d, %r9d // Store width to r9d
+		imull %r12d, %r9d // Multiply width by i
+		addl %r11d, %r9d// add by truesize
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+		//Mirror B across x axis Call this D
+		movl %r11d, %r9d // Store truesize to r9d
+		decl %r9d //decrease  by 1
+		subl %r13d, %r9d //subtract j from this
+		imull %r10d, %r9d // Multiply by width
+		addl %r12d, %r9d// add by i
+		movl %eax, (%r8, %r9, 4) // Store the pixel in the output image
+		incl %r13d	//increment j by 1
+		jmp .ColLoopKodd //go back to for loop
+
+
+	.OperationsJ:
+		
+		cmpl %r15d, %r12d // if i < width/2
+		jae .RowEndK // Exit the loop if i >= width/2
+
+		// Calculate the index in the input image
+		movl %r10d, %r9d // Store width to r9d which gets the data array address
+		imull %r12d, %r9d // // Multiply width in r10 by i 
+		addl %r13d, %r9d // Add j (col) to that value
+
+		// r9d has the index to the current pixel we are at in data
+
+		// Get the pixel
+		movq %rdi, %r8 	// Copy the original image pointer to %r8
+		addq $8, %r8 	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+		movq (%r8), %r8	// Start at the beginning of the array of data
+
+		movl (%r8, %r9, 4), %eax // Access the array values and move it to register %eax (32-bit rax) 
+
+
+
+
+
+
+
+
+		incl %r13d	//increment j by 1
+
+		jmp .ColLoopKodd //go back to for loop
+
+
+
+	.ColEndKodd:
+		// Increment i
+		incl %r12d
+		jmp .RowLoopKodd
+
+	.RowEndKodd:
+		// Restore callee-saved registers
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		popq %r11
+		popq %r10
+
+		addq $32, %rsp // Deallocate the memory used from the stack
+		popq %rbp // Restore rbp register to original value
+		movq $1, %rax	//put 1 into rax and return it
+		ret 
+
 .TrashDimensions:
-	movl $0, %eax	//put 1 into rax and return it
-	ret
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+
+	addq $32, %rsp // Deallocate the memory used from the stack
+	popq %rbp // Restore rbp register to original value
+	movq $0, %rax	//put 0 into rax and return it
+	ret	
 
 	/* This avoids linker warning about executable stack */
 .section .note.GNU-stack,"",@progbits
