@@ -1054,11 +1054,12 @@ imgproc_kaleidoscope:
 
 	addq $32, %rsp // Deallocate the memory used from the stack
 	popq %rbp // Restore rbp register to original value
-
-	ret $1
+	movl $1 %rax	//put 1 into rax and return it
+	ret 
 
 .TrashDimensions:
-	ret $0
+	movl $0 %rax	//put 1 into rax and return it
+	ret
 
 	/* This avoids linker warning about executable stack */
 .section .note.GNU-stack,"",@progbits
