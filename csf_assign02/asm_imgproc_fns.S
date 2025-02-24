@@ -1094,9 +1094,10 @@ imgproc_kaleidoscope:
 		subl %r12d, %edi //subtract i from size
 
 		cmpl %r10d, %edi //see if mirrored row >= original size
+		//restore callee saved variables
 		popq %rsi
 		popq %rdi
-		jge .CheckStartI
+		jge .CheckStartI //jump to checkstart to check if i = 0
 
 		//allocate stack to get more variables
 		pushq %rdi
@@ -1106,9 +1107,10 @@ imgproc_kaleidoscope:
 		subl %r13d, %edi //subtract j from size
 
 		cmpl %r10d, %edi //see if mirrored col >= original size
+		//restore callee saved registers
 		popq %rsi
 		popq %rdi
-		jge .CheckStartJ
+		jge .CheckStartJ //jump to check if j =0
 
 		
 
@@ -1209,22 +1211,22 @@ imgproc_kaleidoscope:
 
 
 		// Increment j
-		incl %r13d
+		incl %r13d	
 		jmp .ColLoopKodd
 
 	.CheckStartI:
 		cmpl $0, %r12d //sees if i = 0.
 		je .OperationsI
 
-		incl %r13d
+		incl %r13d	//increment j 
 		jmp .ColLoopKodd
 
 	.CheckStartJ:
 		cmpl $0, %r13d //sees if j = 0.
 		je .OperationsJ
 
-		incl %r13d
-		jmp .ColLoopKodd
+		incl %r13d	//increment j 
+		jmp .ColLoopKodd	//jump to the column loop
 
 
 	.OperationsI:
@@ -1306,14 +1308,14 @@ imgproc_kaleidoscope:
 
 		incl %r13d	//increment j by 1
 
-		jmp .ColLoopKodd //go back to for loop
+		jmp .ColLoopKodd //go back to for loop for column
 
 
 
 	.ColEndKodd:
-		// Increment i
+		// Increment i by 1
 		incl %r12d
-		jmp .RowLoopKodd
+		jmp .RowLoopKodd	//jump to t hte row loop 
 
 	.RowEndKodd:
 		// Restore callee-saved registers
@@ -1330,6 +1332,7 @@ imgproc_kaleidoscope:
 		ret 
 
 .TrashDimensions:
+	//restore callee saved registers
 	popq %r15
 	popq %r14
 	popq %r13
