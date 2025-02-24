@@ -927,19 +927,8 @@ imgproc_kaleidoscope:
 	movl %r11d, %r15d //move the height to r15
 	shrl $1, %r15d // divide height by 2
 
-	
-	andl $1, %r10d	//check if the last bit is odd or even by doing bitwise and
-	cmpl $1, %r10d //compare to see if odd
-	je .odd //if equal, then it is odd and jump to odd
 
-.odd:
-	addl $1, %r14d //add 1 to width/2 
-	addl $1, %r14d //add 1 to height/2
-	movl (%rsi), %r10d // width stored in r10d
-
-	// Initialize iterator i to 0
-	movl $0, %r12d // i = 0
-	jmp .RowLoopK	//jump to start the loop
+	movl $0, %r12d // set i = 0 to start the forloop
 
 
 .RowLoopK:
