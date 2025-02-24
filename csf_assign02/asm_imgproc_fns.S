@@ -868,11 +868,208 @@ imgproc_fade:
  * Returns:
  *   1 if successful, 0 if the transformation fails because the
  *   width and height of input_img are not the same.
+ *
+ *
+ *
+ *
+  * Parameters:
+ *   %rdi - pointer to the input Image
+ *   %rsi - pointer to the output Image (which will have
+ *          width and height twice the width/height of the
+ *          input image)
+ *
+ * Register use:
+ *   %r12d - i (pixel row index)
+ *   %r13d - j (pixel column index)
+ *   %r14 - pointer to input Image
+ *   %r15 - pointer to output Image
+ *	 %r8 - array offset
+ *   %r9 - data array address
+ *   %r10 - width
+ *   %r11 - height
+ *
+ * Stack memory:
+ *   -4(%rbp)  - current pixel value
+ *   -8(%rbp)  - pixel r component value (from get_r)
+ *   -12(%rbp) - pixel g component value (from get_g)
+ *   -16(%rbp) - pixel b component value (from get_b)
+ *   -20(%rbp) - pixel a component value (from get_a)
+ *   -24(%rbp) - computed pixel index
  */
+ 
+
+
+
 	.globl imgproc_kaleidoscope
 imgproc_kaleidoscope:
-	/* TODO: implement */
-	ret
+	// align stack
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
+
+	// Store callee-saved registers
+	pushq %r10	
+	pushq %r11
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	// Get width and height from input Image rdi
+	movl (%rsi), %r10d // width stored in r10d
+	movl 4(%rsi), %r11d // height stored in r11d
+	//compare the width and height and see if they are equal
+	cmpl %r10d, %r11d
+	jne .TrashDimensions //if not equal, jump to trashdimensions that returns 0
+
+	movl %r10d, %r14d	//move the width to r14
+	shrl $1, %r14d // divide width by 2
+	movl %r11d, %r15d //move the height to r15
+	shrl $1, %r15d // divide height by 2
+
+	
+	andl $1, %r10d	//check if the last bit is odd or even by doing bitwise and
+	cmpl $1, %r10d //compare to see if odd
+	je .odd //if equal, then it is odd and jump to odd
+
+.odd:
+	addl $1, %r14d //add 1 to width/2 
+	addl $1, %r14d //add 1 to height/2
+	movl (%rsi), %r10d // width stored in r10d
+
+	// Initialize iterator i to 0
+	movl $0, %r12d // i = 0
+	jmp .RowLoopK	//jump to start the loop
+
+
+.RowLoopK:
+	cmpl %r15d, %r12d //if i < height/2
+	jae .RowEndK // Exit the loop if i >= height/2
+
+	movl %r12d, %r13d // j = i
+
+.ColLoopK:
+	cmpl %r14d, %r13d // if j < width/2
+	jae .ColEndK // Exit the loop if j >= width/2
+
+	
+
+	// Calculate the index in the input image
+	movl %r10d, %r9d // Store width to r9d which gets the data array address
+	imull %r12d, %r9d // // Multiply width in r10 by i 
+	addl %r13d, %r9d // Add j (col) to that value
+
+
+	// r9d has the index to the current pixel we are at in data
+
+
+
+	// Get the pixel
+	movq %rdi, %r8 	// Copy the original image pointer to %r8
+	addq $8, %r8 	// Get to the data pointer by offsetting the pointer by 8 (skips width and height)
+	movq (%r8), %r8	// Start at the beginning of the array of data
+
+
+	//Top left
+	//section A
+	movl (%r8, %r9, 4), %eax // Access the array values and move it to register %eax (32-bit rax) 
+	movq %rsi, %r8 	// Copy the output image pointer to %r8
+	addq $8, %r8 	// Get to the data pointer array by adding 8
+	movq (%r8), %r8	// Set the pointer to the beginning of the array
+	movl %eax, (%r8, %r9, 4) //put the pixel on the output image
+
+	//section B
+	// Calculate the index for wedge B (flip i and j)
+	movl %r10d, %r9d // Store width to r9d
+	imull %r13d, %r9d // Multiply width by j 
+	addl %r12d, %r9d // Add i  to get the index
+
+	// Copy the pixel to wedge B
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image (wedge B)
+
+	//Top right quadrant
+    //Mirror A across y axis
+	movl %r10d, %r9d // Store width to r9d
+	imull %r12d, %r9d // Multiply width by i 
+	addl %r10d, %r9d //add width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r13d, %r9d // subtract j to get the index
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+
+	//Mirror B across y axis
+	movl %r10d, %r9d // Store width to r9d
+	imull %r13d, %r9d // Multiply width by i 
+	addl %r10d, %r9d //add width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r12d, %r9d // subtract j to get the index
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+
+	//Mirror A across x axis Call this C
+	movl %r10d, %r9d // Store width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r12d, %r9d // subtract i to get the index
+	imull %r10d, %r9d // Multiply width by (size - row - 1) 
+	addl %r13d, %r9d //add j to r9d
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+
+    //Mirror B across x axis Call this D
+	movl %r10d, %r9d // Store width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r13d, %r9d // subtract i to get the index
+	imull %r10d, %r9d // Multiply width by (size - row - 1) 
+	addl %r12d, %r9d //add j to r9d
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+    //Mirror C across y axis
+	movl %r10d, %r9d // Store width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r13d, %r9d // subtract i to get the index
+	imull %r10d, %r9d // Multiply width by (size - row - 1) 
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r12d, %r9d //subtract j from r9d
+	addl %r10d, %r9d //add width to get the final transformation
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+    //Mirror D across y axis
+	movl %r10d, %r9d // Store width to r9d
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r12d, %r9d // subtract i to get the index
+	imull %r10d, %r9d // Multiply width by (size - row - 1) 
+	subl $1, %r9d //subtract one to reach a existing pointer
+	subl %r13d, %r9d //subtract j from r9d
+	addl %r10d, %r9d //add width to get the final transformation
+	movl %eax, (%r8, %r9, 4) // Store the pixel in the output image 
+
+
+
+	// Increment j
+	incl %r13d
+	jmp .ColLoopK
+
+.ColEndK:
+	// Increment i
+	incl %r12d
+	jmp .RowLoopK
+
+.RowEndK:
+	// Restore callee-saved registers
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11
+	popq %r10
+
+	addq $32, %rsp // Deallocate the memory used from the stack
+	popq %rbp // Restore rbp register to original value
+
+	ret $1
+
+.TrashDimensions:
+	ret $0
 
 	/* This avoids linker warning about executable stack */
 .section .note.GNU-stack,"",@progbits
