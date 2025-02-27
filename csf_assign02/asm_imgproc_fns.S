@@ -139,6 +139,14 @@ make_pixel:
 .globl to_grayscale
 
 to_grayscale:
+	//save register values to stack
+	pushq %rbp
+	subq $8, %rsp
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
 	call get_r 			// get r value of pixel
 	movl %eax, %r12d 	// save red value from rax to r12
 	call get_g 			// get g value of pixel
@@ -162,6 +170,14 @@ to_grayscale:
 	movl %r15d, %ecx 	// 4th parameter for upcoming make_pixel
 	call make_pixel 	// make grayscale pixel from computed values
 
+	//return values to their respective registers
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	addq $8, %rsp
+	popq %rbp
+
 	ret	
 
 /*
@@ -180,6 +196,7 @@ to_grayscale:
  */
 .globl gradient
 gradient:
+	//save register values to stack
 	pushq %rbp
 	subq $8, %rsp
 	pushq %r12
@@ -197,6 +214,7 @@ gradient:
 	subq %rax, %r12			//r12 = r12 - rax = 1000000 - temp^2
 	movq %r12, %rax			//save result to rax to be returned
 
+	//return values to their respective registers
 	popq %r12
 	addq $8, %rsp
 	popq %rbp
@@ -225,6 +243,7 @@ gradient:
  */
 .globl to_fade
 to_fade:
+	//save register values to stack
 	pushq %rbp
 	subq $8, %rsp
 	pushq %rcx
@@ -265,6 +284,7 @@ to_fade:
 	movq %r15, %rcx		//set alpha value to 4th parameter
 	call make_pixel		//make the pixel from those 4 parameters
 
+	//return values to their respective registers
 	popq %r15
 	popq %r14
 	popq %r13
@@ -659,7 +679,7 @@ imgproc_grayscale:
 	call to_grayscale			//Get grayscale value 
 	
 
-	//return everything to their respective register
+	//return everything to their respective registers
 	popq %r15
 	popq %r14
 	popq %r13
@@ -762,12 +782,6 @@ imgproc_fade:
 	movq 8(%r14), %r8   		// Load the data pointer from offset 8 of the input image struct
 	movl (%r8, %r9, 4), %ebx 	// move pixel value to ebx
 
-	//PROBLEM W EDX FROM T0_FADE
-
-	//store everything in stack since gradient and fade accesses those registers
-	pushq %r9			//current index
-	pushq %r14			//input_img
-	pushq %r15			//output_img
 
 	//get gradrow and gradcol
 	movq %r12, %rdi		//i 1st parameter
@@ -789,19 +803,11 @@ imgproc_fade:
 	pushq %rax			//push gradcol to stack
 	
 
-	//POTENTIAL PROBLEM: CHECK TO FADE'S RCX AND RBX
-	//						GRADIENT AND TO FADE BOTH USES R12
-
 	popq %rsi			//pop gradcol from stack to 2nd parameter rsi
 	popq %rdi			//pop gradrow from stack to 1st parameter rdi
 	movq %rbx, %rdx		//move pixel from rbx to rdx
 	call to_fade			//Get faded value 
 	
-
-	//return everything to their respective register
-	popq %r15
-	popq %r14
-	popq %r9
 	
 	popq %rbx
 
