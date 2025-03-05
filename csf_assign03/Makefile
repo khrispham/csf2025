@@ -15,6 +15,7 @@ FILES_TO_SUBMIT = $(shell ls *.cpp *.h Makefile README.txt 2> /dev/null)
 
 # Executable target
 csim : $(OBJS)
+	make depend
 	$(CXX) -o $@ $+
 
 # Target to create a solution.zip file you can upload to Gradescope
