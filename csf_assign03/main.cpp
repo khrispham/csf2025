@@ -53,15 +53,17 @@ public:
   }
 
   //access a single memory address
-  void access(char op, uint32_t address, int &hit_count, int &miss_count, int &eviction_count) {
+  void access(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count) {
     //increment timestamp for every access
     timestamp++;
 
+    //isolate the index of the set and the tag
     int b = log2(block_size);
     int s = log2(num_sets);
     uint32_t tag = address >> (s + b); //isolate the tag part of memory address
     uint32_t set_index = (address >> b) & ((1 << s) - 1);
 
+    //initialize values to search for a hit
     Set &set = sets[set_index];
     bool hit = false;
     int hit_index = -1;
@@ -80,18 +82,29 @@ public:
       }
     }
 
+    //WRITE HIT
     if (hit) {
-      hit_count++;
       //for LRU, update access timestamp on a hit
       if (lru_eviction) {
         set.blocks[hit_index].access_ts = timestamp;
       }
-      //on a store, mark block dirty if using write-back
+      //write-through -> dirty = false | write-back -> dirty = true
       if (op == 's' && !write_through) {
         set.blocks[hit_index].dirty = true;
+        store_hits++;
+      } else if (op == 's' && write_through) {
+        set.blocks[hit_index].dirty = false;
+        store_hits++;
+      } else if (op == 'l') {
+        load_hits++;
       }
+    //WRITE MISS
     } else {
-      miss_count++;
+      if(op == 's') {
+        store_misses++;
+      } else if (op == 'l') {
+        load_misses++;
+      }
       int target_index;
       //use empty block if there is one
       if (empty_index != -1) {
@@ -103,7 +116,8 @@ public:
         //if FIFO, use load_ts; if LRU, use access_ts
         for (int i = 0; i < num_blocks; ++i){
           Block &block = set.blocks[i];
-          uint32_t time_val = lru_eviction ? block.load_ts : block.access_ts;
+          //LRU -> time_val = acess_ts | FIFO -> time_val = load_ts
+          uint32_t time_val = lru_eviction ? block.access_ts : block.load_ts;
           if (time_val < candidate_ts) {
             candidate_ts = time_val;
             target_index = i;
@@ -138,20 +152,45 @@ private:
 };
 
 int main( int argc, char **argv ) {
+  /*
   if (argc != 7) {
     cerr << "Usage: " << argv[0]
-         << " <num_sets> <num_blocks> <block_size> <write_allocate (0/1)> "
-            "<write_through (0/1)> <eviction_policy (lru/fifo)>" << endl;
+         << " <num_sets> <num_blocks> <block_size> <write_allocate/no_write_allocate> "
+            "<write_through/write_back> <eviction_policy (lru/fifo)>" << endl;
     return EXIT_FAILURE;
   }
+  */
 
   int num_sets = atoi(argv[1]);       // Should be a power of 2.
   int num_blocks = atoi(argv[2]);   // Should be a power of 2.
   int block_size = atoi(argv[3]);       // Power of 2, at least 4.
-  bool write_allocate = (atoi(argv[4]) == 1);
-  bool write_through = (atoi(argv[5]) == 1);
-  bool lru_eviction = false;         // true for LRU, false for FIFO.
+  //bool write_allocate = (atoi(argv[4]) == 1);
+  //bool write_through = (atoi(argv[5]) == 1);
   
+  
+  bool write_allocate;
+  string writemiss(argv[4]);
+  if (writemiss == "write-allocate"){
+    write_allocate = true;
+  } else if (writemiss == "no-write-allocate"){
+    write_allocate = false;
+  } else {
+    cerr << "Invalid write-miss policy. Use 'write-allocate' or 'no-write-allocate'." << endl;
+    return EXIT_FAILURE;
+  }
+
+  bool write_through;
+  string writehit(argv[5]);
+  if (writehit == "write-back"){
+    write_through = false;
+  } else if (writehit == "write-through"){
+    write_through = true;
+  } else {
+    cerr << "Invalid write-hit policy. Use 'write-through' or 'write-back'." << endl;
+    return EXIT_FAILURE;
+  }
+
+  bool lru_eviction;         // true for LRU, false for FIFO.
   string policy(argv[6]);
   if (policy == "lru") {
     lru_eviction = true;
@@ -163,16 +202,28 @@ int main( int argc, char **argv ) {
   }
   
   Cache cache(num_sets, num_blocks, block_size, write_allocate, write_through, lru_eviction);
-  int hit_count = 0, miss_count = 0, eviction_count = 0;
+  int load_hits = 0, load_misses = 0, store_hits = 0, store_misses = 0, eviction_count = 0, total_loads = 0, total_stores = 0, total_cycles = 0;
   char op;
   uint32_t address;
   int val;
 
   while (std::cin >> op >> std::hex >> address >> std::dec >> val) {
-    cache.access(op, address, hit_count, miss_count, eviction_count);
+    if(op == 'l') {
+      total_loads++;
+    } else if (op == 's') {
+      total_stores++;
+    }
+    total_cycles++;
+    cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count);
   }
 
-  std::cout << "Hit count: " << hit_count << "\n Miss count: " << miss_count << "\n Eviction count: " << eviction_count << std::endl;
+  std::cout << "Total loads: " << total_loads 
+            << "\nTotal stores: " << total_stores
+            << "\nLoad hits : " << load_hits
+            << "\nLoad misses: " << load_misses
+            << "\nStore hits: " << store_hits
+            << "\nStore misses: " << store_misses
+            << "\nTotal cycles: " << total_cycles << std::endl;
   
   return 0;
 }
