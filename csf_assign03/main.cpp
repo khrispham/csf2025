@@ -72,9 +72,8 @@ public:
       if (block.valid && block.tag == tag) {
           hit = true;
           hit_index = i;
-          if (hit_index == i) {
           break;
-          }
+        
       }
       if (!block.valid && empty_index == -1) {
         empty_index = i;
