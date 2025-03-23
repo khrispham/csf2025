@@ -170,7 +170,7 @@ public:
       }
       total_cycles++;
       //if write back make the block dirty
-      if(!write_allocate){
+      if(!write_through){
         set.blocks[hit_index].dirty = true;
       }
       else{
