@@ -95,7 +95,7 @@ public:
             int lru_index = 0;
             uint32_t lru_ts = set.blocks[0].access_ts; 
 
-            // Find the block that LRU
+            // Find the block that LRU (lowest access time)
             for (int i = 1; i < num_blocks; ++i) {
                 if (set.blocks[i].access_ts < lru_ts) {
                     lru_index = i;
@@ -107,7 +107,7 @@ public:
             Block &evicted_block = set.blocks[lru_index];
             if (evicted_block.dirty && !write_through) {
                 // Write back to memory if the block is dirty (write-back policy)
-                total_cycles += 100; // Assume 100 cycles to write back to memory
+                total_cycles += 100; //edit this cycles shit
             }
             eviction_count++;
 
@@ -202,7 +202,7 @@ public:
                 Block &evicted_block = set.blocks[lru_index];
                 if (evicted_block.dirty && !write_through) {
                     // Write back to memory if the block is dirty (write-back policy)
-                    total_cycles += 100; // Assume 100 cycles to write back to memory
+                    total_cycles += 100; //edit this cycles shit
                 }
                 eviction_count++;
 
@@ -212,7 +212,7 @@ public:
                 evicted_block.dirty = !write_through; // Dirty if write-back, clean if write-through
                 evicted_block.load_ts = timestamp;
                 evicted_block.access_ts = timestamp;
-                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
+                total_cycles += 25 * block_size;//edit this cycles shit
             } else {
                 // Use the empty block
                 Block &target = set.blocks[empty_index];
@@ -221,11 +221,11 @@ public:
                 target.dirty = !write_through; // Dirty if write-back, clean if write-through
                 target.load_ts = timestamp;
                 target.access_ts = timestamp;
-                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
+                total_cycles += 25 * block_size; //edit this cycles shit
             }
         } else {
             // No-write-allocate: write directly to memory
-            total_cycles += 100; // Assume 100 cycles to write to memory
+            total_cycles += 100; //edit this cycles shit
         }
     }
     total_cycles++; // Increment cycle count for the access
