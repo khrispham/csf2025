@@ -95,7 +95,7 @@ public:
             int lru_index = 0;
             uint32_t lru_ts = set.blocks[0].access_ts; 
 
-            // Find the block that LRU (lowest access time)
+            // Find the block that LRU
             for (int i = 1; i < num_blocks; ++i) {
                 if (set.blocks[i].access_ts < lru_ts) {
                     lru_index = i;
@@ -107,7 +107,7 @@ public:
             Block &evicted_block = set.blocks[lru_index];
             if (evicted_block.dirty && !write_through) {
                 // Write back to memory if the block is dirty (write-back policy)
-                total_cycles += 100; //edit this cycles shit
+                total_cycles += 100; // Assume 100 cycles to write back to memory
             }
             eviction_count++;
 
@@ -202,7 +202,7 @@ public:
                 Block &evicted_block = set.blocks[lru_index];
                 if (evicted_block.dirty && !write_through) {
                     // Write back to memory if the block is dirty (write-back policy)
-                    total_cycles += 100; //edit this cycles shit
+                    total_cycles += 100; // Assume 100 cycles to write back to memory
                 }
                 eviction_count++;
 
@@ -212,7 +212,7 @@ public:
                 evicted_block.dirty = !write_through; // Dirty if write-back, clean if write-through
                 evicted_block.load_ts = timestamp;
                 evicted_block.access_ts = timestamp;
-                total_cycles += 25 * block_size;//edit this cycles shit
+                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
             } else {
                 // Use the empty block
                 Block &target = set.blocks[empty_index];
@@ -221,11 +221,11 @@ public:
                 target.dirty = !write_through; // Dirty if write-back, clean if write-through
                 target.load_ts = timestamp;
                 target.access_ts = timestamp;
-                total_cycles += 25 * block_size; //edit this cycles shit
+                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
             }
         } else {
             // No-write-allocate: write directly to memory
-            total_cycles += 100; //edit this cycles shit
+            total_cycles += 100; // Assume 100 cycles to write to memory
         }
     }
     total_cycles++; // Increment cycle count for the access
@@ -346,7 +346,9 @@ private:
 
 
 
-
+bool isPowerOfTwo(int x) {
+  return x && ((x & (x - 1)) == 0);
+}
 
 
 int main( int argc, char **argv ) {
@@ -398,6 +400,32 @@ int main( int argc, char **argv ) {
     cerr << "Invalid eviction policy. Use 'lru' or 'fifo'." << endl;
     return EXIT_FAILURE;
   }
+
+
+  // Check if block size is a power of 2.
+  if (!isPowerOfTwo(block_size)) {
+    std::cerr << "Error: Block size must be a power of 2." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check if number of sets is a power of 2.
+  if (!isPowerOfTwo(num_sets)) {
+    std::cerr << "Error: Number of sets must be a power of 2." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check if block size is at least 4.
+  if (block_size < 4) {
+    std::cerr << "Error: Block size must be at least 4." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check that write-back and no-write-allocate are not both specified.
+  if (!write_allocate && !write_through) {
+    std::cerr << "Error: Write-back and no-write-allocate cannot both be specified." << std::endl;
+    return EXIT_FAILURE;
+  }
+
   
   Cache cache(num_sets, num_blocks, block_size, write_allocate, write_through, lru_eviction);
   int load_hits = 0, load_misses = 0, store_hits = 0, store_misses = 0, eviction_count = 0, total_loads = 0, total_stores = 0, total_cycles = 0;
@@ -419,7 +447,7 @@ int main( int argc, char **argv ) {
   // }
 
   std::string line;
-while (std::getline(std::cin, line)) {
+  while (std::getline(std::cin, line)) {
     std::istringstream iss(line);
     char op;
     uint32_t address;
@@ -435,7 +463,7 @@ while (std::getline(std::cin, line)) {
         total_stores++;
         cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles, block_size);
     }
-}
+  }
 
   std::cout << "Total loads: " << total_loads 
             << "\nTotal stores: " << total_stores
