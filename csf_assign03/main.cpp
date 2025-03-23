@@ -84,6 +84,9 @@ public:
     if(hit){
       //yay we hit lmfao
       load_hits++;      
+      if (lru_eviction) {
+          set.blocks[hit_index].access_ts = timestamp; // Update access timestamp for LRU
+      }
     } else { //rip we missed
       
       load_misses++;
@@ -163,6 +166,9 @@ public:
 
     if(hit){
       store_hits++;
+      if (lru_eviction) {
+          set.blocks[hit_index].access_ts = timestamp; // Update access timestamp for LRU
+      }
       total_cycles++;
       //if write back make the block dirty
       if(!write_allocate){
@@ -395,22 +401,41 @@ int main( int argc, char **argv ) {
   
   Cache cache(num_sets, num_blocks, block_size, write_allocate, write_through, lru_eviction);
   int load_hits = 0, load_misses = 0, store_hits = 0, store_misses = 0, eviction_count = 0, total_loads = 0, total_stores = 0, total_cycles = 0;
-  char op;
-  uint32_t address;
-  int val;
+  // char op;
+  // uint32_t address;
+  // int val;
 
-  while (std::cin >> op >> std::hex >> address >> std::dec >> val) {
+  // while (std::cin >> op >> std::hex >> address >> std::dec >> val) {
     
-    if(op == 'l') {
-      total_loads++;
-      cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
+  //   if(op == 'l') {
+  //     total_loads++;
+  //     cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
+  //   } else if (op == 's') {
+  //     cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
+  //     total_stores++;
+  //   }
+  //   // total_cycles++;
+  //   // cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles);
+  // }
+
+  std::string line;
+while (std::getline(std::cin, line)) {
+    std::istringstream iss(line);
+    char op;
+    uint32_t address;
+    int val = 0; // Default value if the third value is missing
+
+    iss >> op >> std::hex >> address;
+    iss >> std::dec >> val; // Try to read the third value, but it's okay if it fails
+
+    if (op == 'l') {
+        total_loads++;
+        cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles, block_size);
     } else if (op == 's') {
-      cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
-      total_stores++;
+        total_stores++;
+        cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles, block_size);
     }
-    total_cycles++;
-    // cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles);
-  }
+}
 
   std::cout << "Total loads: " << total_loads 
             << "\nTotal stores: " << total_stores
