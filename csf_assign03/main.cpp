@@ -52,8 +52,188 @@ public:
     }
   }
 
+  void load(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles, int block_size){
+    timestamp++;
+    //isolate the index of the set and the tag
+    int b = log2(block_size);
+    int s = log2(num_sets);
+    uint32_t tag = address >> (s + b); //isolate the tag part of memory address
+    uint32_t set_index = (address >> b) & ((1 << s) - 1);
+
+    //initialize values to search for a hit
+    Set &set = sets[set_index];
+    bool hit = false;
+    int hit_index = -1;
+    int empty_index = -1;
+
+    //search set for a hit
+    for (int i = 0; i < num_blocks; ++i) {
+      Block &block = set.blocks[i];
+      if (block.valid && block.tag == tag) {
+          hit = true;
+          hit_index = i;
+          if (hit_index == i) {
+          break;
+          }
+      }
+      if (!block.valid && empty_index == -1) {
+        empty_index = i;
+      }
+    }
+
+    if(hit){
+      //yay we hit lmfao
+      load_hits++;      
+    } else { //rip we missed
+      
+      load_misses++;
+      // There isn't empty index space that exists
+      if (empty_index == -1) {
+            int lru_index = 0;
+            uint32_t lru_ts = set.blocks[0].access_ts; 
+
+            // Find the block that LRU
+            for (int i = 1; i < num_blocks; ++i) {
+                if (set.blocks[i].access_ts < lru_ts) {
+                    lru_index = i;
+                    lru_ts = set.blocks[i].access_ts;
+                }
+            }
+
+            // Evict the LRU block
+            Block &evicted_block = set.blocks[lru_index];
+            if (evicted_block.dirty && !write_through) {
+                // Write back to memory if the block is dirty (write-back policy)
+                total_cycles += 100; // Assume 100 cycles to write back to memory
+            }
+            eviction_count++;
+
+            // Replace the evicted block with the new block
+            evicted_block.valid = true;
+            evicted_block.tag = tag;
+            evicted_block.dirty = false; // New block is clean on load
+            evicted_block.load_ts = timestamp;
+            evicted_block.access_ts = timestamp;
+            total_cycles += 25 * block_size; 
+        } else {
+            // Use the empty block that exists alreayd
+            Block &target = set.blocks[empty_index];
+            target.valid = true;
+            target.tag = tag;
+            target.dirty = false; 
+            target.load_ts = timestamp;
+            target.access_ts = timestamp;
+            total_cycles += 25 * block_size; 
+        }
+    }
+    total_cycles++; 
+
+
+
+  }
+
+
+
+  void store(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles, int block_size){
+      timestamp++;
+        //isolate the index of the set and the tag
+    int b = log2(block_size);
+    int s = log2(num_sets);
+    uint32_t tag = address >> (s + b); //isolate the tag part of memory address
+    uint32_t set_index = (address >> b) & ((1 << s) - 1);
+
+    //initialize values to search for a hit
+    Set &set = sets[set_index];
+    bool hit = false;
+    int hit_index = -1;
+    int empty_index = -1;
+
+    //search set for a hit
+    for (int i = 0; i < num_blocks; ++i) {
+      Block &block = set.blocks[i];
+      if (block.valid && block.tag == tag) {
+          hit = true;
+          hit_index = i;
+          break;
+      }
+      if (!block.valid && empty_index == -1) {
+        empty_index = i;
+      }
+    }
+
+    if(hit){
+      store_hits++;
+      total_cycles++;
+      //if write back make the block dirty
+      if(!write_allocate){
+        set.blocks[hit_index].dirty = true;
+      }
+      else{
+        //increment by 100 if we are using write back as 
+        total_cycles+= 100;
+      }
+
+    }
+    //OOPS I MISSED
+    else {
+      // Cache miss
+        store_misses++;
+        if (write_allocate) {
+            if (empty_index == -1) {
+                // No empty block, perform eviction (LRU)
+                int lru_index = 0;
+                uint32_t lru_ts = set.blocks[0].access_ts; // Initialize with the first block's timestamp
+
+                // Find the block with the least recently used timestamp
+                for (int i = 1; i < num_blocks; ++i) {
+                    if (set.blocks[i].access_ts < lru_ts) {
+                        lru_index = i;
+                        lru_ts = set.blocks[i].access_ts;
+                    }
+                }
+
+                // Evict the LRU block
+                Block &evicted_block = set.blocks[lru_index];
+                if (evicted_block.dirty && !write_through) {
+                    // Write back to memory if the block is dirty (write-back policy)
+                    total_cycles += 100; // Assume 100 cycles to write back to memory
+                }
+                eviction_count++;
+
+                // Replace the evicted block with the new block
+                evicted_block.valid = true;
+                evicted_block.tag = tag;
+                evicted_block.dirty = !write_through; // Dirty if write-back, clean if write-through
+                evicted_block.load_ts = timestamp;
+                evicted_block.access_ts = timestamp;
+                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
+            } else {
+                // Use the empty block
+                Block &target = set.blocks[empty_index];
+                target.valid = true;
+                target.tag = tag;
+                target.dirty = !write_through; // Dirty if write-back, clean if write-through
+                target.load_ts = timestamp;
+                target.access_ts = timestamp;
+                total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
+            }
+        } else {
+            // No-write-allocate: write directly to memory
+            total_cycles += 100; // Assume 100 cycles to write to memory
+        }
+    }
+    total_cycles++; // Increment cycle count for the access
+
+
+  }
+
+
+
+
+
+
   //access a single memory address
-  void access(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count) {
+  void access(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles) {
     //increment timestamp for every access
     timestamp++;
 
@@ -98,10 +278,16 @@ public:
       } else if (op == 'l') {
         load_hits++;
       }
+
+      
     //WRITE MISS
     } else {
       if(op == 's') {
         store_misses++;
+        if (write_allocate){
+          //TODO handle cycles here
+          //reset the block
+        }
       } else if (op == 'l') {
         load_misses++;
       }
@@ -125,17 +311,9 @@ public:
         }
         eviction_count++;
         //TODO: handle dirty eviction here for write-back caches
-          Block &evicted_block = set.blocks[target_index];
-          if (evicted_block.dirty && !write_through) {
-              // Write the dirty block back to main memory
-              //idk how to do that tho :/
 
-              // Reset the dirty bit after writing back
-              evicted_block.dirty = false;
-          }
         
       }
-
       //load new block into cache
       Block &target = set.blocks[target_index];
       target.valid = true;
@@ -222,13 +400,16 @@ int main( int argc, char **argv ) {
   int val;
 
   while (std::cin >> op >> std::hex >> address >> std::dec >> val) {
+    
     if(op == 'l') {
       total_loads++;
+      cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
     } else if (op == 's') {
+      cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
       total_stores++;
     }
     total_cycles++;
-    cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count);
+    // cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles);
   }
 
   std::cout << "Total loads: " << total_loads 
