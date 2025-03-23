@@ -125,6 +125,15 @@ public:
         }
         eviction_count++;
         //TODO: handle dirty eviction here for write-back caches
+          Block &evicted_block = set.blocks[target_index];
+          if (evicted_block.dirty && !write_through) {
+              // Write the dirty block back to main memory
+              //idk how to do that tho :/
+
+              // Reset the dirty bit after writing back
+              evicted_block.dirty = false;
+          }
+        
       }
 
       //load new block into cache
@@ -150,6 +159,11 @@ private:
     return result;
   }
 };
+
+
+
+
+
 
 int main( int argc, char **argv ) {
   /*
