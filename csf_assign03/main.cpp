@@ -469,7 +469,7 @@ int main( int argc, char **argv ) {
 
   std::cout << "Total loads: " << total_loads 
             << "\nTotal stores: " << total_stores
-            << "\nLoad hits : " << load_hits
+            << "\nLoad hits: " << load_hits
             << "\nLoad misses: " << load_misses
             << "\nStore hits: " << store_hits
             << "\nStore misses: " << store_misses
