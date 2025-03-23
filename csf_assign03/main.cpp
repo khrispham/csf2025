@@ -87,7 +87,7 @@ public:
           set.blocks[hit_index].access_ts = timestamp; // Update access timestamp for LRU
       }
     } else { //rip we missed
-      
+      total_cycles += 25 * block_size; 
       load_misses++;
       // There isn't empty index space that exists
       if (empty_index == -1) {
@@ -104,9 +104,9 @@ public:
 
             // Evict the LRU block
             Block &evicted_block = set.blocks[lru_index];
-            if (evicted_block.dirty && !write_through) {
+            if (evicted_block.dirty) {
                 // Write back to memory if the block is dirty (write-back policy)
-                total_cycles += 100; // Assume 100 cycles to write back to memory
+                total_cycles += 25*block_size; // Assume 100 cycles to write back to memory
             }
             eviction_count++;
 
@@ -116,7 +116,6 @@ public:
             evicted_block.dirty = false; // New block is clean on load
             evicted_block.load_ts = timestamp;
             evicted_block.access_ts = timestamp;
-            total_cycles += 25 * block_size; 
         } else {
             // Use the empty block that exists alreayd
             Block &target = set.blocks[empty_index];
@@ -125,7 +124,7 @@ public:
             target.dirty = false; 
             target.load_ts = timestamp;
             target.access_ts = timestamp;
-            total_cycles += 25 * block_size; 
+
         }
     }
     total_cycles++; 
@@ -199,9 +198,9 @@ public:
 
                 // Evict the LRU block
                 Block &evicted_block = set.blocks[lru_index];
-                if (evicted_block.dirty && !write_through) {
+                if (evicted_block.dirty) {
                     // Write back to memory if the block is dirty (write-back policy)
-                    total_cycles += 100; // Assume 100 cycles to write back to memory
+                    total_cycles += 25 * block_size; ; // Assume 100 cycles to write back to memory
                 }
                 eviction_count++;
 
@@ -221,6 +220,10 @@ public:
                 target.load_ts = timestamp;
                 target.access_ts = timestamp;
                 total_cycles += 25 * block_size; // Assume 25 cycles per byte to load from memory
+            }
+
+            if(write_through){
+              total_cycles+=100;
             }
         } else {
             // No-write-allocate: write directly to memory
