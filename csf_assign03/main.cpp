@@ -15,23 +15,39 @@ struct Block {
   uint32_t load_ts, access_ts; //can either be LRU or FIFO
 };
 
+//structure for cache set
 struct Set {
   vector<Block> blocks;
 };
 
+//structure for cache
 class Cache {
 public:
   vector<Set> sets;
-  int num_sets;
-  int num_blocks;
-  int block_size;
-  bool write_allocate; // true: write-allocate, false: no-write-allocate
-  bool write_through; // true: write-through, false: write-back
-  bool lru_eviction; // true: LRU, false: FIFO
-  uint32_t timestamp; //global simulated timestamp
+  int num_sets;         
+  int num_blocks;       
+  int block_size;       
+  bool write_allocate;  
+  bool write_through;   
+  bool lru_eviction;    
+  uint32_t timestamp;   //global simulated timestamp
 
 
-  //create an empty cache with the given specifications
+  /**
+   * @brief        Initialize a new cache instance
+   * 
+   * @param[in]    num_sets       Number of sets in this cache instance
+   * @param[in]    num_blocks     Number of blocks in each set
+   * @param[in]    block_size     Number of bytes in each cache block
+   * @param[in]    write_allocate True: write-allocate, False: no-write-allocate
+   * @param[in]    write_through  True: write-through, False: write-back
+   * @param[in]    lru_eviction   True: LRU, False: FIFO
+   * 
+   * @return       Description of what the function returns.
+   * 
+   * @note         timestamp is automatically initialized to 0.
+   * @warning      num_sets, num_blocks, block_size should all be positive powers-of-2, block size is no smaller than 4
+   */
   Cache(int num_sets, int num_blocks, int block_size,
     bool write_allocate, bool write_through, bool lru_eviction)
   : num_sets(num_sets), num_blocks(num_blocks), block_size(block_size),
@@ -52,7 +68,19 @@ public:
     }
   }
 
-  void load(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles, int block_size){
+  /**
+   * @brief        Simulate a load request to the cache
+   * 
+   * @param[in]    address        address that's to be used to find tag and index
+   * @param[in]    load_hits      number of load hits upon function call
+   * @param[in]    load_misses    number of load misses upon function call
+   * @param[in]    store_hits     number of store hits upon function call
+   * @param[in]    store_misses   number of store misses upon function call
+   * @param[in]    total_cycles   number of cycles upon function call
+   * 
+   * @note         timestamp is unconditionally incremented by 1.
+   */ 
+  void load(uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &total_cycles){
     timestamp++;
     //isolate the index of the set and the tag
     int b = log2(block_size);
@@ -108,7 +136,6 @@ public:
                 // Write back to memory if the block is dirty (write-back policy)
                 total_cycles += 25*block_size; // Assume 100 cycles to write back to memory
             }
-            eviction_count++;
 
             // Replace the evicted block with the new block
             evicted_block.valid = true;
@@ -134,10 +161,21 @@ public:
   }
 
 
-
-  void store(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles, int block_size){
-      timestamp++;
-        //isolate the index of the set and the tag
+  /**
+   * @brief        Simulate a store request to the cache
+   * 
+   * @param[in]    address        address that's to be used to find tag and index
+   * @param[in]    load_hits      number of load hits upon function call
+   * @param[in]    load_misses    number of load misses upon function call
+   * @param[in]    store_hits     number of store hits upon function call
+   * @param[in]    store_misses   number of store misses upon function call
+   * @param[in]    total_cycles   number of cycles upon function call
+   * 
+   * @note         timestamp is unconditionally incremented by 1.
+   */ 
+  void store(uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &total_cycles){
+    timestamp++;
+    //isolate the index of the set and the tag
     int b = log2(block_size);
     int s = log2(num_sets);
     uint32_t tag = address >> (s + b); //isolate the tag part of memory address
@@ -202,7 +240,7 @@ public:
                     // Write back to memory if the block is dirty (write-back policy)
                     total_cycles += 25 * block_size; ; // Assume 100 cycles to write back to memory
                 }
-                eviction_count++;
+                
 
                 // Replace the evicted block with the new block
                 evicted_block.valid = true;
@@ -238,103 +276,6 @@ public:
 
 
 
-
-
-  //access a single memory address
-  void access(char op, uint32_t address, int &load_hits, int &load_misses, int &store_hits, int &store_misses, int &eviction_count, int &total_cycles) {
-    //increment timestamp for every access
-    timestamp++;
-
-    //isolate the index of the set and the tag
-    int b = log2(block_size);
-    int s = log2(num_sets);
-    uint32_t tag = address >> (s + b); //isolate the tag part of memory address
-    uint32_t set_index = (address >> b) & ((1 << s) - 1);
-
-    //initialize values to search for a hit
-    Set &set = sets[set_index];
-    bool hit = false;
-    int hit_index = -1;
-    int empty_index = -1;
-
-    //search set for a hit
-    for (int i = 0; i < num_blocks; ++i) {
-      Block &block = set.blocks[i];
-      if (block.valid && block.tag == tag) {
-          hit = true;
-          hit_index = i;
-          break;
-      }
-      if (!block.valid && empty_index == -1) {
-        empty_index = i;
-      }
-    }
-
-    //WRITE HIT
-    if (hit) {
-      //for LRU, update access timestamp on a hit
-      if (lru_eviction) {
-        set.blocks[hit_index].access_ts = timestamp;
-      }
-      //write-through -> dirty = false | write-back -> dirty = true
-      if (op == 's' && !write_through) {
-        set.blocks[hit_index].dirty = true;
-        store_hits++;
-      } else if (op == 's' && write_through) {
-        set.blocks[hit_index].dirty = false;
-        store_hits++;
-      } else if (op == 'l') {
-        load_hits++;
-      }
-
-      
-    //WRITE MISS
-    } else {
-      if(op == 's') {
-        store_misses++;
-        if (write_allocate){
-          //TODO handle cycles here
-          //reset the block
-        }
-      } else if (op == 'l') {
-        load_misses++;
-      }
-      int target_index;
-      //use empty block if there is one
-      if (empty_index != -1) {
-        target_index = empty_index;
-      } else {
-        //if no empty block, evict a block
-        target_index = 0;
-        uint32_t candidate_ts = numeric_limits<uint32_t>::max();
-        //if FIFO, use load_ts; if LRU, use access_ts
-        for (int i = 0; i < num_blocks; ++i){
-          Block &block = set.blocks[i];
-          //LRU -> time_val = acess_ts | FIFO -> time_val = load_ts
-          uint32_t time_val = lru_eviction ? block.access_ts : block.load_ts;
-          if (time_val < candidate_ts) {
-            candidate_ts = time_val;
-            target_index = i;
-          }
-        }
-        eviction_count++;
-        //TODO: handle dirty eviction here for write-back caches
-
-        
-      }
-      //load new block into cache
-      Block &target = set.blocks[target_index];
-      target.valid = true;
-      target.tag = tag;
-      target.dirty = false; //assume clean on load
-      target.load_ts = timestamp;
-      target.access_ts = timestamp;
-      if (op == 's' && !write_through) {
-        target.dirty = true;
-      }
-    }
-  }
-
 private:
   //Helper function compute integer log base 2 of x
   int log2(int x) {
@@ -354,20 +295,23 @@ bool isPowerOfTwo(int x) {
 
 
 int main( int argc, char **argv ) {
-  /*
-  if (argc != 7) {
-    cerr << "Usage: " << argv[0]
-         << " <num_sets> <num_blocks> <block_size> <write_allocate/no_write_allocate> "
-            "<write_through/write_back> <eviction_policy (lru/fifo)>" << endl;
+
+  int num_sets = atoi(argv[1]); 
+  // Check if number of sets is a power of 2.
+  if (!isPowerOfTwo(num_sets)) {
+    std::cerr << "Error: Number of sets must be a power of 2." << std::endl;
     return EXIT_FAILURE;
   }
-  */
+  
+  int num_blocks = atoi(argv[2]);  
 
-  int num_sets = atoi(argv[1]);       // Should be a power of 2.
-  int num_blocks = atoi(argv[2]);   // Should be a power of 2.
-  int block_size = atoi(argv[3]);       // Power of 2, at least 4.
-  //bool write_allocate = (atoi(argv[4]) == 1);
-  //bool write_through = (atoi(argv[5]) == 1);
+
+  int block_size = atoi(argv[3]);   
+  // Check if block size is a power of 2 and is at least 4.
+  if (!isPowerOfTwo(block_size) || block_size < 4) {
+    std::cerr << "Error: Block size must be a power of 2." << std::endl;
+    return EXIT_FAILURE;
+  }
   
   
   bool write_allocate;
@@ -404,23 +348,9 @@ int main( int argc, char **argv ) {
   }
 
 
-  // Check if block size is a power of 2.
-  if (!isPowerOfTwo(block_size)) {
-    std::cerr << "Error: Block size must be a power of 2." << std::endl;
-    return EXIT_FAILURE;
-  }
 
-  // Check if number of sets is a power of 2.
-  if (!isPowerOfTwo(num_sets)) {
-    std::cerr << "Error: Number of sets must be a power of 2." << std::endl;
-    return EXIT_FAILURE;
-  }
 
-  // Check if block size is at least 4.
-  if (block_size < 4) {
-    std::cerr << "Error: Block size must be at least 4." << std::endl;
-    return EXIT_FAILURE;
-  }
+
 
   // Check that write-back and no-write-allocate are not both specified.
   if (!write_allocate && !write_through) {
@@ -430,23 +360,7 @@ int main( int argc, char **argv ) {
 
   
   Cache cache(num_sets, num_blocks, block_size, write_allocate, write_through, lru_eviction);
-  int load_hits = 0, load_misses = 0, store_hits = 0, store_misses = 0, eviction_count = 0, total_loads = 0, total_stores = 0, total_cycles = 0;
-  // char op;
-  // uint32_t address;
-  // int val;
-
-  // while (std::cin >> op >> std::hex >> address >> std::dec >> val) {
-    
-  //   if(op == 'l') {
-  //     total_loads++;
-  //     cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
-  //   } else if (op == 's') {
-  //     cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles,block_size);
-  //     total_stores++;
-  //   }
-  //   // total_cycles++;
-  //   // cache.access(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles);
-  // }
+  int load_hits = 0, load_misses = 0, store_hits = 0, store_misses = 0, total_loads = 0, total_stores = 0, total_cycles = 0;
 
   std::string line;
   while (std::getline(std::cin, line)) {
@@ -460,10 +374,10 @@ int main( int argc, char **argv ) {
 
     if (op == 'l') {
         total_loads++;
-        cache.load(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles, block_size);
+        cache.load(address, load_hits, load_misses, store_hits, store_misses, total_cycles);
     } else if (op == 's') {
         total_stores++;
-        cache.store(op, address, load_hits, load_misses, store_hits, store_misses, eviction_count, total_cycles, block_size);
+        cache.store(address, load_hits, load_misses, store_hits, store_misses, total_cycles);
     }
   }
 
