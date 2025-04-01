@@ -2,6 +2,10 @@ TODO: names of team members and their contributions to the project
 Khris: wrote the code skeleton for the cache structure and main() code
 John: implemented load() and store() functions within cache with write-through/write-back and write-alloc/no-write-alloc
 TODO (for MS3): best cache report
+Member contribution
+Khris: performed best cache testing
+John: implemented FIFO eviction policy
+
 Summary: There are 12 total trials, with 3 different variables
 - Different cache format (but same total size)
     - 256 sets, 4 blocks/set, 16 byte block size: 4-way associative
@@ -171,6 +175,6 @@ associative mapping.
 - Conclusion:
 We want to use associate mapping, which write-allocate and write-back are generally
 suitable for. Furthermore, we want to use LRU eviction policy which will almost always
-result in better performance
+yield better performance
 This combination is of trial 2, which generally has the lowest total cycles, only except
 for test_cache2.trace.
