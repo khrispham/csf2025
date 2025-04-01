@@ -119,19 +119,20 @@ public:
       load_misses++;
       // There isn't empty index space that exists
       if (empty_index == -1) {
-            int lru_index = 0;
-            uint32_t lru_ts = set.blocks[0].access_ts; 
+            int evict_index = 0;
+            uint32_t evict_ts = lru_eviction ? set.blocks[0].access_ts : set.blocks[0].load_ts; // LRU: access_ts, FIFO: load_ts
 
             // Find the block that LRU
             for (int i = 1; i < num_blocks; ++i) {
-                if (set.blocks[i].access_ts < lru_ts) {
-                    lru_index = i;
-                    lru_ts = set.blocks[i].access_ts;
-                }
+            uint32_t current_ts = lru_eviction ? set.blocks[i].access_ts : set.blocks[i].load_ts; // Choose timestamp based on policy
+            if (current_ts < evict_ts) {
+                evict_index = i;
+                evict_ts = current_ts;
+            }
             }
 
             // Evict the LRU block
-            Block &evicted_block = set.blocks[lru_index];
+            Block &evicted_block = set.blocks[evict_index];
             if (evicted_block.dirty) {
                 // Write back to memory if the block is dirty (write-back policy)
                 total_cycles += 25*block_size; // Assume 100 cycles to write back to memory
@@ -222,20 +223,21 @@ public:
         store_misses++;
         if (write_allocate) {
             if (empty_index == -1) {
-                // No empty block, perform eviction (LRU)
-                int lru_index = 0;
-                uint32_t lru_ts = set.blocks[0].access_ts; // Initialize with the first block's timestamp
+                // No empty block, perform eviction (LRU) or FIFO depending on whether it is FIFO or LRU
+                int evict_index = 0;
+                 uint32_t evict_ts = lru_eviction ? set.blocks[0].access_ts : set.blocks[0].load_ts; // LRU: access_ts, FIFO: load_ts
 
                 // Find the block with the least recently used timestamp
                 for (int i = 1; i < num_blocks; ++i) {
-                    if (set.blocks[i].access_ts < lru_ts) {
-                        lru_index = i;
-                        lru_ts = set.blocks[i].access_ts;
+                  uint32_t current_ts = lru_eviction ? set.blocks[i].access_ts : set.blocks[i].load_ts; // Choose timestamp based on policy
+                  if (current_ts < evict_ts) {
+                      evict_index = i;
+                      evict_ts = current_ts;
                     }
                 }
 
                 // Evict the LRU block
-                Block &evicted_block = set.blocks[lru_index];
+                Block &evicted_block = set.blocks[evict_index];
                 if (evicted_block.dirty) {
                     // Write back to memory if the block is dirty (write-back policy)
                     total_cycles += 25 * block_size; ; // Assume 100 cycles to write back to memory
