@@ -27,13 +27,50 @@ int main( int argc, char **argv ) {
   // open the named file
   // TODO: open the named file
 
+  char *filename = argv[1];
+  fd = open(filename, O_RDWR);
+  if (fd < 0) {
+    // file couldn't be opened: handle error and exit
+    fprintf(stderr, "Error: couldn't open the file\n");
+    exit(1);
+  }
+
+
+
   // determine file size and number of elements
   unsigned long file_size, num_elements;
   // TODO: determine the file size and number of elements
+  struct stat statbuf;
+  int rc = fstat( fd, &statbuf );
+  if ( rc != 0 ) {
+    fprintf(stderr, "Error: fstat error\n");
+    exit(1);
+  }
+  file_size = statbuf.st_size;
+  num_elements = file_size / sizeof(int64_t);
+  if ( file_size % sizeof(int64_t) != 0 ) {
+    fprintf(stderr, "Error: file size is not a multiple of int64_t\n");
+    exit(1);
+  }
+  // statbuf.st_size indicates the number of bytes in the file
+
+
+  
+
 
   // mmap the file data
   int64_t *arr;
   // TODO: mmap the file data
+arr = mmap( NULL, file_size, PROT_READ | PROT_WRITE,
+            MAP_SHARED, fd, 0 );
+close( fd ); // file can be closed now
+if ( arr == MAP_FAILED ) {
+  fprintf( stderr, "Error: mmap error\n" );
+  exit( 1 );
+    // handle mmap error and exit
+}
+
+
 
   // Sort the data!
   int success;
@@ -45,6 +82,7 @@ int main( int argc, char **argv ) {
 
   // Unmap the file data
   // TODO: unmap the file data
+  munmap( arr, file_size );
 
   return 0;
 }
