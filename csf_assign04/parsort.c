@@ -15,6 +15,64 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
 
 // TODO: declare additional helper functions if needed
 
+typedef struct {
+    pid_t pid;
+    int status_checked;
+    int success;
+} ChildProcess;
+
+ChildProcess create_child_process(int64_t *arr, unsigned long start, unsigned long end, unsigned long par_threshold) {
+    ChildProcess child;
+    child.pid = fork();
+    child.status_checked = 0;
+    child.success = 0;
+    
+    if (child.pid == 0) {
+        // Child process
+        int success = quicksort(arr, start, end, par_threshold);
+        if(success) {
+          //work was done succesfulyl
+            exit(0); 
+        } else {
+            exit(1);
+        }
+    } else if (child.pid < 0) {
+        // Fork failed
+        child.success = 0;
+    }
+    return child;
+}
+
+int wait_for_child(ChildProcess *child) {
+    int rc, wstatus;
+    pid_t child_pid = child->pid;
+rc = waitpid( child_pid, &wstatus, 0 );
+if ( rc < 0 ) {
+  // waitpid failed
+  child->success = 0;
+  return 0;
+} else {
+  // check status of child
+  if ( !WIFEXITED( wstatus ) ) {
+    // child did not exit normally (e.g., it was terminated by a signal)
+    child->success = 0;
+  } else if ( WEXITSTATUS( wstatus ) != 0 ) {
+    // child exited with a non-zero exit code
+    child->success = 0;
+  } else {
+    // child exited with exit code zero (it was successful)
+    child->success = 1;
+  } 
+}
+    child->status_checked = 1;
+    return child->success;
+
+}
+
+
+
+
+
 int main( int argc, char **argv ) {
   unsigned long par_threshold;
   if ( argc != 3 || sscanf( argv[2], "%lu", &par_threshold ) != 1 ) {
@@ -215,11 +273,21 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
 
   // Recursively sort the left and right partitions
   int left_success, right_success;
+  
   // TODO: modify this code so that the recursive calls execute in child processes
-  left_success = quicksort( arr, start, mid, par_threshold );
-  right_success = quicksort( arr, mid + 1, end, par_threshold );
+  ChildProcess left, right;
+  left = create_child_process( arr, start, mid, par_threshold );
+  right = create_child_process( arr, mid + 1, end, par_threshold );
 
+  wait_for_child( &left );
+  wait_for_child( &right );
+
+
+  left_success = left.success;
+  right_success = right.success;
   return left_success && right_success;
+
 }
 
 // TODO: define additional helper functions if needed
+
