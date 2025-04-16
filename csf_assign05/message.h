@@ -20,6 +20,29 @@ struct Message {
     : tag(tag), data(data) { }
 
   // TODO: you could add helper functions
+  //Return a string of the format "[tag]:[data]\n"
+  std::string encode() {
+    std::string encoded = tag + ":" + data + "\n";
+    if (encoded.size() > Message::MAX_LEN) {
+      fprintf(stderr, "Encoded message exceeds maximum allowed length.\n");
+    }
+    return encoded;
+  }
+
+  //Update tag and data of this Message struct from string param "[tag]:[data]"
+  static Message decode(const std::string &msgstring) {
+    std::string delimiter = ":";
+    size_t pos = msgstring.find(delimiter);
+    if (pos == std::string::npos) {
+      fprintf(stderr, "Invalid message format: no delimiter found.\n");
+    }
+    std::string tag_part = msgstring.substr(0, pos);
+    std::string data_part = msgstring.substr(pos + 1, msgstring.size() - pos - 1);
+    if (!data_part.empty() && data_part.back() == '\n') {
+      data_part.pop_back();
+    }
+    return Message(tag_part, data_part);
+  }
 };
 
 // standard message tags (note that you don't need to worry about
