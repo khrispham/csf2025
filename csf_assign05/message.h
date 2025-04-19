@@ -32,7 +32,7 @@ struct Message {
   //Update tag and data of this Message struct from string param "[tag]:[data]"
   static Message decode(const std::string &msgstring) {
     std::string delimiter = ":";
-    size_t pos = msgstring.find(delimiter);
+    std::size_t pos = msgstring.find(delimiter);
     if (pos == std::string::npos) {
       fprintf(stderr, "Invalid message format: no delimiter found.\n");
     }
