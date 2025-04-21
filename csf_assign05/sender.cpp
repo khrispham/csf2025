@@ -21,22 +21,21 @@ int main(int argc, char **argv) {
     Connection conn;
     conn.connect(server_hostname, std::stoi(server_port));
     if (!conn.is_open()) {
-        std::cerr << "Error: Unable to connect to server " 
-                 << server_hostname << " on port " << server_port << "\n";
+        std::cerr << "Error: Unable to connect to server.  Details: Attempted to connect to" << server_hostname << "on port:" << server_port << "\n" ;
         return 1;
     }
 
     // Send slogin message
     Message slogin_msg(TAG_SLOGIN, username);
     if (!conn.send(slogin_msg)) {
-        std::cerr << "Error: Failed to send login message\n";
+        std::cerr << "Error: Unable to send login message\n";
         return 1;
     }
 
     // Receive login response
     Message login_resp;
     if (!conn.receive(login_resp)) {
-        std::cerr << "Error: Failed to receive login response\n";
+        std::cerr << "Error: Unable to receive login response\n";
         return 1;
     }
 
@@ -89,7 +88,7 @@ int main(int argc, char **argv) {
                 }
                 return 0;
             } else {
-                std::cerr << "Error: Invalid command\n";
+                std::cerr << "Error: Command does not exist\n";
                 continue;
             }
 

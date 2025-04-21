@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   // TODO: connect to server
   conn.connect(server_hostname, server_port);
   if (!conn.is_open()) {
-    std::cerr << "Could not connect to server at " << server_hostname << ":" << server_port << "\n";
+    std::cerr << "Could not connect to server. Details: Attempted to connect to" << server_hostname << "on port:" << server_port << "\n";
     return 1;
   }
 
@@ -91,7 +91,8 @@ int main(int argc, char **argv) {
         std::string message_text = msg.data.substr(second_colon + 1);
         std::cout << sender << ": " << message_text << "\n";
       }
-    } else if (msg.tag == TAG_ERR) {
+    } //if the tag has errors
+    else if (msg.tag == TAG_ERR) {
       std::cerr << msg.data << "\n";
       return 1;
     }
