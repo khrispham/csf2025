@@ -4,30 +4,27 @@
 #include <deque>
 #include <pthread.h>
 #include <semaphore.h>
+
 struct Message;
 
-// This data type represents a queue of Messages waiting to
-// be delivered to a receiver
 class MessageQueue {
 public:
-  MessageQueue();
-  ~MessageQueue();
+    MessageQueue();
+    ~MessageQueue();
 
-  void enqueue(Message *msg); // will not block
-  Message *dequeue();         // blocks for at most a finite amount of time
+    void enqueue(Message *msg);
+    Message *dequeue();
+
+    // Debugging function
+    int get_sem_value();
 
 private:
-  // value semantics prohibited
-  MessageQueue(const MessageQueue &);
-  MessageQueue &operator=(const MessageQueue &);
+    MessageQueue(const MessageQueue &) = delete;
+    MessageQueue &operator=(const MessageQueue &) = delete;
 
-  // these data members are sufficient to implement the
-  // enqueue and dequeue operations: the idea is that the semaphore
-  // keeps a count of how many messages are currently in the queue
-
-  pthread_mutex_t m_lock; // must be held while accessing queue
-  sem_t m_avail;
-  std::deque<Message *> m_messages;
+    pthread_mutex_t m_lock;
+    sem_t m_avail;
+    std::deque<Message *> m_messages;
 };
 
 #endif // MESSAGE_QUEUE_H

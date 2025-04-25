@@ -24,7 +24,7 @@ public:
 
 private:
   std::string room_name;
-  pthread_mutex_t lock;
+  mutable pthread_mutex_t lock;
 
   typedef std::set<User *> UserSet;
   UserSet members;
