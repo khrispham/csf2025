@@ -36,25 +36,25 @@ void chat_with_sender(Server *server, Connection *conn, const std::string &usern
     while (true) {
         Message msg;
         if (!conn->receive(msg)) {
-            conn->send(Message(TAG_ERR, "Invalid message"));
+            conn->send(Message(TAG_ERR, "invalid message"));
             break;
         }
 
         if (msg.tag == TAG_JOIN) {
             if (room) {
-                conn->send(Message(TAG_ERR, "Already in a room"));
+                conn->send(Message(TAG_ERR, "already in a room"));
                 continue;
             }
             room = server->find_or_create_room(msg.data);
-            conn->send(Message(TAG_OK, "Joined room: " + msg.data));
+            conn->send(Message(TAG_OK, "joined room " + msg.data));
         }
     else if (msg.tag == TAG_LEAVE) {
       if (!room) {
-        conn->send(Message(TAG_ERR, "Not in a room"));
+        conn->send(Message(TAG_ERR, "not in a room"));
         continue;
       }
       room = nullptr;
-      conn->send(Message(TAG_OK, "Left room"));
+      conn->send(Message(TAG_OK, "left room" + room->get_room_name()));
     } 
     else if (msg.tag == TAG_SENDALL) {
       if (!room) {
@@ -62,14 +62,14 @@ void chat_with_sender(Server *server, Connection *conn, const std::string &usern
         continue;
       }
       room->broadcast_message(username, msg.data);
-      conn->send(Message(TAG_OK, "Message sent"));
+      conn->send(Message(TAG_OK, "message sent"));
     } 
     else if (msg.tag == TAG_QUIT) {
-      conn->send(Message(TAG_OK, "Bye"));
+      conn->send(Message(TAG_OK, "bye"));
       break;
     } 
     else {
-      conn->send(Message(TAG_ERR, "Invalid command for sender"));
+      conn->send(Message(TAG_ERR, "invalid command for sender"));
     }
   }
 }
@@ -77,7 +77,7 @@ void chat_with_sender(Server *server, Connection *conn, const std::string &usern
 void chat_with_receiver(Server *server, Connection *conn, const std::string &username) {
   Message join_msg;
   if (!conn->receive(join_msg) || join_msg.tag != TAG_JOIN) {
-      conn->send(Message(TAG_ERR, "Expected join message"));
+      conn->send(Message(TAG_ERR, "expected join message"));
       return;
   }
 
@@ -85,7 +85,7 @@ void chat_with_receiver(Server *server, Connection *conn, const std::string &use
   User *user = new User(username);
   room->add_member(user);
   
-  conn->send(Message(TAG_OK, "Joined room: " + join_msg.data));
+  conn->send(Message(TAG_OK, "welcome"));
 
   while (true) {
       Message *msg = user->mqueue.dequeue();
@@ -118,11 +118,11 @@ void *worker(void *arg) {
   }
 
   if (login_msg.tag == TAG_SLOGIN) {
-    conn->send(Message(TAG_OK, "Logged in as sender"));
+    conn->send(Message(TAG_OK, "logged in as " + login_msg.data));
     chat_with_sender(server, conn.get(), login_msg.data);
   } 
   else if (login_msg.tag == TAG_RLOGIN) {
-    conn->send(Message(TAG_OK, "Logged in as receiver"));
+    conn->send(Message(TAG_OK, "logged in as " + login_msg.data));
     chat_with_receiver(server, conn.get(), login_msg.data);
   } 
   else {
